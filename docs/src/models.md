@@ -16,14 +16,14 @@
 The canonical Kermack-McKendrick susceptible-infectious-recovered model is perhaps the best known example of state-space models within epidemiology.
 
 ```@raw html
-<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sir.png" alt="SIR model" height="40"/>
+<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sir.png" alt="SIR model" style="height: 60;"/>
 ```
 
 #### SI model
 The susceptible-infectious model is the simplest conceptual example; two states and only one type event.
 
 ```@raw html
-<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/si.png" alt="SI model" height="60"/>
+<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/si.png" alt="SI model" style="height: 6px;"/>
 ```
 
 #### SIS model
