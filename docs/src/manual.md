@@ -8,7 +8,7 @@ Depth = 3
 ## Types
 
 ```@docs
-DiscuitModel
+DPOMPModel
 SimResults
 ```
 
@@ -38,7 +38,7 @@ plot_parameter_marginal
 plot_parameter_heatmap
 ```
 
-### custom MCMC
+### Custom
 
 ## Index
 
