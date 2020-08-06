@@ -29,16 +29,9 @@ function get_observations(fpath::String)
     df = CSV.read(fpath)
     return get_observations(df)
 end
-# function get_observations(array::Array{Float64, 2})
-#     y = Array{Int64, 2}(undef, size(array, 1), size(array, 2) - 1)
-#     y .= array[:,2:size(array, 2)]
-#     return Observations(array[:,1], y)
-# end
 
 ## save simulation results to file
-# NEED TO ADJUST FOR 2D POPULATIONS *************
 function print_sim_results(results::SimResults, dpath::String)
-    #model::HiddenMarkovModel,
     # check dir
     isdir(dpath) || mkpath(dpath)
     # print sequence

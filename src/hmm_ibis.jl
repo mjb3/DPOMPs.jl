@@ -166,15 +166,6 @@ function get_prop_density(cv::Array{Float64,2}, old)
     end
 end
 
-## DEBUG:
-# function copy_particle(p::Particle)
-#     traj = Event[]
-#     for i in eachindex(p.trajectory)
-#         push!(traj, deepcopy(p.trajectory[i]))
-#     end
-#     return Particle(copy(p.theta), copy(p.initial_condition), copy(p.final_condition), traj, copy(p.log_like))
-# end
-
 ## MBP IBIS algorithm
 function run_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_crit, n_props, ind_prop, alpha)
     outer_p = size(theta,2)
@@ -276,44 +267,13 @@ function run_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs
     # bme[2] += log(Statistics.mean(w))
     bme .*= -2
 
-    # ## MCMC sample:
-    # n_iter::Int64 = (rej_sample / n_chains)
-    # rejs = RejectionSample(zeros(n_chains, n_iter, length(mu)), zeros(length(mu)), zeros(length(mu), length(mu)))
-    # # sample particle with weight w
-    # pidx = rs_multinomial(w, n_chains)
-    # k_log[1] += rej_sample
-    # propd = get_prop_density(cv, propd)
-    # for mc in 1:n_chains
-    #     p = pidx[mc]
-    #     for i in 1:n_iter
-    #         ## propose new theta - independent OR conditional on current sample
-    #         theta_f = ind_prop ? get_mv_param(propd, 1.0, mu) : get_mv_param(propd, tj, ptcls[p].theta)
-    #         # mutate and accept with MH probability
-    #         xf = model_based_proposal(model, theta_f, ptcls[p])
-    #         ## HACK:
-    #         if exp(xf.log_like[2] - ptcls[p].log_like[2]) > rand()
-    #             ptcls[p] = xf
-    #             k_log[2] += 1
-    #             tj *= alpha
-    #         else
-    #             tj *= 0.999
-    #         end
-    #         # sample theta
-    #         rejs.theta[mc,i,:] .= ptcls[p].theta
-    #     end
-    # end
-    # ## compute rejection sample mu and sigma:
-    # # compute_rs_mu_cv!(rejs)
-    # compute_rs_mu_cv!(rejs.mu, rejs.cv, rejs.theta)
-    # println(" rj mcv: ", rejs.mu, rejs.cv)
-    ## return results
+    ##
     output = ImportanceSample(mu, cv, theta, w, time_ns() - start_time, bme)
     println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s. AR = ", round(100.0 * k_log[2] / k_log[1]; sigdigits = 3), "%")
     return output
 end
 
 ## MBP IBIS algorithm with dependent f/g
-# - MERGE WITH MACROS ***
 function run_dfg_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_crit = C_DF_ESS_CRIT; n_props = 3, ind_prop = false, alpha = 1.002)
     outer_p = size(theta, 1)
     println("running MBP IBIS (DFG). n = ", outer_p)
@@ -355,7 +315,6 @@ function run_dfg_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, es
                 ptcls[p].g_trans[obs_i,:] .= iterate_dfg_particle!(ptcls[p], model, t[p], model.obs_data[obs_i])
                 gx[p] = exp(ptcls[p].log_like[3])
             end
-            # println(" gx: ", sum(gx))
             ## COMPUTE L and update weights
             lml = log(sum(w .* gx) / sum(w))
             bme[1] += lml
@@ -363,7 +322,6 @@ function run_dfg_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, es
             w .*= gx
             ##
             compute_is_mu_covar!(mu, cv, theta, w)
-            # println(" y", obs_i, ": ", mu)
             ## resample and mutate if criteria satisfied:
             essv = compute_ess(w)
             # t = model.obs_data[obs_i].time
@@ -371,7 +329,6 @@ function run_dfg_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, es
                 ## resample and swap
                 propd = get_prop_density(cv, propd)
                 nidx = rs_systematic(w)
-                # println(obs_i, " - ", length(nidx), " - ", length(mtd_gx))
                 mtd_gx .= gx[nidx]
                 for p in eachindex(ptcls)
                     ptcls2[p] = deepcopy(ptcls[nidx[p]])
@@ -386,7 +343,6 @@ function run_dfg_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, es
                         theta_f = ind_prop ? get_mv_param(propd, 1.0, mu) : get_mv_param(propd, tj, ptcls[p].theta)
                         xf = partial_dfg_model_based_proposal(model, theta_f, ptcls[p], obs_i)
                         ## HACK:
-                        # if exp(sum(xf.log_like) - sum(ptcls[p].log_like)) > rand()
                         if exp(xf.log_like[2] - ptcls[p].log_like[2]) > rand()
                             mtd_gx[p] = exp(xf.log_like[3])
                             ptcls[p] = xf

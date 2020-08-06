@@ -18,16 +18,6 @@ function get_mv_param(propd::Distributions.MvNormal, sclr::Float64, theta_i::Arr
 end
 
 ## compute mean and covar matrix for a rejection sample
-# function compute_rs_mu_cv!(mu::Array{Float64,1}, cv::Array{Float64,2}, theta::Array{Float64,3})
-#     # x.mu .= zeros(size(samples,1))
-#     for p in eachindex(mu)
-#         mu[p] = Statistics.mean(theta[:,:,p])
-#     end
-#     d::Int64 = length(theta) / length(mu)
-#     cv .= Statistics.cov(reshape(theta, d, length(mu)))
-# end
-
-## compute mean and covar matrix for a rejection sample
 function handle_rej_samples(theta::Array{Float64,3}, ap::Int64 = 0)
     # x.mu .= zeros(size(samples,1))
     output = RejectionSample(theta, zeros(size(theta,1)), zeros(size(theta,1),size(theta,1)))

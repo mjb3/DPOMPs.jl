@@ -9,7 +9,6 @@ module DPOMPs
 ### public stuffs ###
 # export HiddenMarkovModel, Observations
 # export run_debug_analysis, get_log_pdf_fn, read_obs_from_file
-# export pooley_sis_hmm
 
 ### resources
 import Statistics

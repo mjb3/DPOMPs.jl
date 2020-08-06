@@ -2,9 +2,6 @@
 # include("hmm_particle_filter.jl")
 # import .HMMParticleFilter
 
-## resources
-import StatsBase
-
 ## dummy obs function - MAKE PUBLIC
 function dmy_obs_fn(y::Observation, population::Array{Int64,1}, parameters::Array{Float64,1})
     y.val .= population
@@ -88,13 +85,6 @@ function generate_gaussian_obs_model(σ::Float64 = 2.0; n::Int = 2, seq = 2:n, y
         return gom2
     end
 end
-
-## generate JIT private model
-# function get_private_model(model::DiscuitModel, obs_data::Observations)
-#     t0fn() = model.initial_condition            # t0 sampler
-#     tfn = generate_trans_fn(model.m_transition) # transition function
-#     return HiddenMarkovModel(model.model_name, size(model.m_transition,1), model.rate_function, t0fn, tfn, model.observation_function, model.observation_model, obs_data, model.prior, model.t0_index)
-# end
 
 ## PUBLIC FUNCTION
 """

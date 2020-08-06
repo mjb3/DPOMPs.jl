@@ -133,44 +133,6 @@ function test_rs(c_rs::Int64, c_p::Int64, alg::Int64 = 1, show_detail = false)
     # println("ns = ", c_rs, "; p = ", c_p, ". avg error = ", sum(abs.(rs)) / c_p)
 end
 
-## validate 'chopthin'
-import Random
-function val_chopthin(c_p::Int64, show_detail = false)
-    println("chopthin resampler validation:")
-    Random.seed!(1)
-    px = rand(c_p)
-    nwx = copy(px)
-    nwx ./= sum(px)
-    show_detail && println("p = ", px)
-    show_detail && println("nw = ", nwx)
-    x = rs_chopthin(px)
-    show_detail && println("I = ", x[1])
-    show_detail && println("wt = ", x[2])
-    println("finished, length = ", [length(x[1]), length(x[2])])
-end
-# val_chopthin(10, true)
-
-## test 'chopthin'
-# function test_chopthin(c_rs::Int64, c_p::Int64, show_detail = false)
-#     println("testing chopthin resampler:")
-#     x = zeros(Int64, c_rs, c_p)
-#     px = rand(c_p)
-#     nwx = copy(px)
-#     nwx ./= sum(px)
-#     show_detail && println("p = ", px)
-#     show_detail && println("nw = ", nwx)
-#     cumsum!(px, px)
-#     for i in 1:c_rs
-#         x[i,:] .= rs_chopthin(px)
-#     end
-#     # println("rs: ", x)
-#     rs = rs_dist(x)
-#     show_detail && println("rs: ", rs)
-#     rs .-= nwx
-#     show_detail && println("discrepancy: ", rs)
-#     println("ns = ", c_rs, "; p = ", c_p, ". avg error = ", sum(abs.(rs)) / c_p)
-# end
-
 ## run tests
 # test_rs(10, 100, 1, false)
 # test_rs(1000, 100, 2)

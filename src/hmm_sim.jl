@@ -165,8 +165,3 @@ function generate_x0(model::HiddenMarkovModel, theta::Array{Float64, 1}, ntries 
     println("WARNING: having an issue generating a valid trajectory for ", theta)
     return generate_x0(model, theta, false)
 end
-
-## run sim with auto generated obs times
-# function gillespie_sim(model::HiddenMarkovModel, parameters::Array{Float64, 1}, tmax::Float64 = 100.0, num_obs::Int64 = 5)
-#     return gillespie_sim(model, parameters, generate_observations())
-# end

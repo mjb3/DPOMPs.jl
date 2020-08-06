@@ -1,4 +1,4 @@
-## standard DA-MCMC proposals
+## standard DA-MCMC proposals - IN DEV ****
 
 ## trajectory proposal
 function std_mcmc_proposal(model::HiddenMarkovModel, xi::Particle) #, theta_f::Array{Float64,1}
