@@ -35,10 +35,6 @@ const C_RT_UNITS = 1000000000
 include("hmm_structs.jl")
 ## common ###
 include("hmm_cmn.jl")
-## generate internal model
-# function get_internal_hmm(hmm::HiddenMarkovModel, obs_data::Observations)
-#     return InternalHMM(hmm.model_name, hmm.n_events, hmm.rate_function, hmm.fn_initial_condition, hmm.fn_transition, hmm.obs_function, hmm.obs_model, obs_data)
-# end
 ## Gillespie simulation ###
 include("hmm_sim.jl")
 ## MCMC ###
