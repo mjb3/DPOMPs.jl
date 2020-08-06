@@ -107,12 +107,15 @@ end
 **Parameters**
 - `model`               -- `DPOMPModel` (see [DCTMPs.jl models]@ref).
 - `obs_data`            -- `Observations` data.
+
+**Optional**
 - `n_chains`            -- number of Markov chains (optional, default: 3.)
 - `initial_parameters`  -- 2d array of initial model parameters. Each column vector correspondes to a single model parameter.
 - `steps`               -- number of iterations.
 - `adapt_period`        -- number of discarded samples.
 - `mbp`                 -- model based proposals (MBP). Set `mbp = false` for standard proposals.
 - `ppp`                 -- the proportion of parameter (vs. trajectory) proposals in Gibbs sampler. Default: 30%. NB. not required for MBP.
+- `fin_adapt`           -- finite adaptive algorithm. The default is `false`, i.e. [fully] adaptive.
 
 Run an `n_chains`-MCMC analysis. The `initial_parameters` are sampled from the prior distribution unless otherwise specified by the user.
 

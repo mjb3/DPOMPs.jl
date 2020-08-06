@@ -1,3 +1,3 @@
 using Documenter, DPOMPs
 
-makedocs(sitename="DPOMPs docs")
+makedocs(sitename="DPOMPs.jl docs")
