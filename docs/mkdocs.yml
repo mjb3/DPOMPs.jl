@@ -15,7 +15,7 @@ extra_javascript:
   - https://cdn.rawgit.com/pcooksey/bibtex-js/ef59e62c/src/bibtex_js.js
 
 markdown_extensions:
-  - codehilite
+  # - codehilite
   - extra
   - tables
   - fenced_code

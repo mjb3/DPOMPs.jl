@@ -11,7 +11,9 @@
 
 A well-known example is the Kermack-McKendrick SIR model:
 ```@raw html
-<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sir.png" alt="SIR model" height="60"/>
+<style>epmodel{ height: 60; }</style>
+
+<img class="epmodel" src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sir.png" alt="SIR model"/>
 ```
 
 In applied science, such systems are often difficult to directly observe, and so they are referred to in context as **Partially Observed**.
