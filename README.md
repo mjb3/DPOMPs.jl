@@ -4,7 +4,7 @@ Fast Bayesian parameter inference for Discrete-state-space Partially Observed Ma
 ![Documentation](https://github.com/mjb3/DPOMPs.jl/workflows/Documentation/badge.svg)
 ![TagBot](https://github.com/mjb3/DPOMPs.jl/workflows/TagBot/badge.svg)
 
-This package contains tools for Bayesian inference and simulation of DPOMP models. See the 
+This package contains tools for Bayesian inference and simulation of DPOMP models. See the [docs][docs].
 
 ## Features
 
@@ -16,7 +16,7 @@ This package contains tools for Bayesian inference and simulation of DPOMP model
 ## Installation
 
 The package is not registered and must be added via the package manager Pkg.
-From the REPL type `]` to enter the Pkg mode and run:
+From the Julia REPL type `]` to enter the Pkg mode, and run:
 
 ```
 pkg> add https://github.com/mjb3/DPOMPs.jl
@@ -24,6 +24,6 @@ pkg> add https://github.com/mjb3/DPOMPs.jl
 
 ## Usage
 
-See the [package documentation][docs] for further information and examples.
+The [package documentation][docs] has more information and examples.
 
-[docs]: https://mjb3.github.io/DPOMPs.jl/
+[docs]: https://mjb3.github.io/DPOMPs.jl/stable
