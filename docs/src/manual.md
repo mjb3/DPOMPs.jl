@@ -1,4 +1,4 @@
-# DPOMPs.jl manual
+# Package manual
 
 ```@contents
 Pages = ["manual.md"]
