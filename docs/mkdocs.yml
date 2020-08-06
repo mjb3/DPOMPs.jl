@@ -2,8 +2,8 @@ site_name:           DPOMPs.jl
 repo_url:            https://github.com/mjb3/DPOMPs.jl
 site_description:    Bayesian parameter inference for Discrete state space Partially Observed Markov Processes in Julia.
 site_author:         Martin Burke
-theme: readthedocs
-# theme:               cyborg
+# theme: readthedocs
+theme:               cyborg
 # theme:               bootstrap386
 
 extra_css:
@@ -25,8 +25,8 @@ docs_dir: 'build'
 
 pages:
 - Introduction: index.md
-- Sample code: examples.md
 - Models: models.md
+- Sample code: examples.md
 - Package manual: manual.md
 # - Monte Carlo introduction: monte_carlo_intro/monte_carlo_intro.md
 # - MCMC introduction: mcmc_intro/mcmc_intro.md
