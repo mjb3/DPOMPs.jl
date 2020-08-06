@@ -38,8 +38,9 @@ const C_DEBUG = false
 const C_RT_UNITS = 1000000000
 
 ### public stuffs ###
-export DPOMPModel, Observations
-# export run_debug_analysis, get_log_pdf_fn, read_obs_from_file
+export DPOMPModel, SimResults
+export gillespie_sim, run_mcmc_analysis, run_mbp_ibis_analysis, run_smc2_analysis
+export plot_trajectory, plot_parameter_trace, plot_parameter_marginal, plot_parameter_heatmap
 
 #### DCTMPs ####
 

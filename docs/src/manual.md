@@ -1,4 +1,4 @@
-# Discuit.jl manual
+# DPOMPs.jl manual
 
 ```@contents
 Pages = ["manual.md"]
@@ -22,9 +22,10 @@ gillespie_sim
 ### Inference
 
 ```@docs
-gillespie_sim
 run_mcmc_analysis
 run_mbp_ibis_analysis
+run_smc2_analysis
+run_arq_mcmc_analysis
 ```
 
 ### Utilities
