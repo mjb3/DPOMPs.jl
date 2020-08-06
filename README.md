@@ -1,8 +1,8 @@
 # DPOMPs.jl
 Fast Bayesian parameter inference for Discrete-state-space Partially Observed Markov Processes in Julia
 
-https://github.com/mjb3/DPOMPs.jl/workflows/Documentation/badge.svg
-https://github.com/mjb3/DPOMPs.jl/workflows/TagBot/badge.svg
+![Documentation](https://github.com/mjb3/DPOMPs.jl/workflows/Documentation/badge.svg)
+![TagBot](https://github.com/mjb3/DPOMPs.jl/workflows/TagBot/badge.svg)
 
 This package contains tools for Bayesian inference and simulation of DPOMP models. See the 
 
