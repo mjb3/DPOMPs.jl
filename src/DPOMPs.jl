@@ -4,6 +4,18 @@
 
 # HMM: mcmc, mbp, smc, ibis, etc
 # ARQ: production ARQ MCMC code
+"""
+DPOMPs is a package for:
+
+- Bayesian parameter inference, and
+- Simulation of,
+- Discrete-state-space Partially Observed Markov Processes.
+- Inludes automated tools for convergence diagnosis and analysis.
+- Developed for Julia `1.0`.
+- Author: Martin Burke (martin.burke@bioss.ac.uk)
+- Date: 2020-08-06
+
+"""
 module DPOMPs
 
 ### public stuffs ###
