@@ -18,10 +18,6 @@ DPOMPs is a package for:
 """
 module DPOMPs
 
-### public stuffs ###
-# export HiddenMarkovModel, Observations
-# export run_debug_analysis, get_log_pdf_fn, read_obs_from_file
-
 ### resources
 import Statistics
 import Distributions
@@ -40,6 +36,10 @@ const C_DF_ADAPT = 10000
 const C_DF_ESS_CRIT = 0.3
 const C_DEBUG = false
 const C_RT_UNITS = 1000000000
+
+### public stuffs ###
+export DPOMPModel, Observations
+# export run_debug_analysis, get_log_pdf_fn, read_obs_from_file
 
 #### DCTMPs ####
 

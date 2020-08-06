@@ -31,6 +31,17 @@ struct DFGParticle
 end
 
 ## results of gillespie sim
+"""
+    SimResults
+
+**Fields**
+- `model_name`      -- string, e,g, `"SIR"`.
+- `particle`        -- the 'trajectory' variable, of type `Particle`.
+- `population`      -- records the final system state.
+- `observations`    -- simulated observations data (an `Array` of `Observation` types.)
+
+The results of a simulation.
+"""
 struct SimResults
     model_name::String
     particle::Particle
