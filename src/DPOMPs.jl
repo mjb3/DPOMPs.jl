@@ -39,7 +39,7 @@ const C_RT_UNITS = 1000000000
 
 ### public stuffs ###
 export DPOMPModel, SimResults
-export gillespie_sim, run_mcmc_analysis, run_mbp_ibis_analysis, run_smc2_analysis
+export gillespie_sim, run_mcmc_analysis, run_mbp_ibis_analysis, run_smc2_analysis, run_arq_mcmc_analysis
 export plot_trajectory, plot_parameter_trace, plot_parameter_marginal, plot_parameter_heatmap
 
 #### DCTMPs ####
