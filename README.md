@@ -8,10 +8,10 @@ This package contains tools for Bayesian inference and simulation of DPOMP model
 
 ## Features
 
-- Customisable finite adaptive MCMC algorithm for fast parameter inference.
-- Pooley model based proposal (MBP) method for improved mixing.
-- Simulation via the Gillespie direct method.
-- Automated tools for convergence diagnosis and analysis.
+- Bayesian parameter inference, and
+- Simulation of,
+- Discrete-state-space Partially Observed Markov Processes, in Julia.
+- Inludes automated tools for convergence diagnosis and analysis.
 
 ## Installation
 
