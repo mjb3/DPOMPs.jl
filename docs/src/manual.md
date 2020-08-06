@@ -19,6 +19,12 @@ SimResults
 
 ## Functions
 
+### Models
+```@docs
+generate_model
+generate_custom_model
+```
+
 ### Simulation
 ```@docs
 gillespie_sim
@@ -34,6 +40,11 @@ run_arq_mcmc_analysis
 ```
 
 ### Utilities
+```@docs
+get_observations
+tabulate_results
+print_results
+```
 
 ### Visualisation
 

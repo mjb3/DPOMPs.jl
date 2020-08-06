@@ -219,7 +219,7 @@ end
 ## results summary
 # TO BE ADDED: ImportanceSample **********
 """
-    tabulate_resultss
+    tabulate_results
 
 **Parameters**
 - `results`     -- a data structure of type `MCMCSample`, `ImportanceSample` or `ARQMCMCSample`.

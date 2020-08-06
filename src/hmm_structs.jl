@@ -55,8 +55,8 @@ end
 
 **Fields**
 - `model_name`          -- string, e,g, `"SIR"`.
-- `initial_condition`   -- initial condition
 - `rate_function`       -- event rate function.
+- `initial_condition`   -- initial condition
 - `m_transition`        -- transition matrix.
 - `observation_function -- observation function, use this to add 'noise' to simulated observations.
 - `prior_density`       -- prior density function.

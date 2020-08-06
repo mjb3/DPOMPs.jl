@@ -95,6 +95,8 @@ Generates an `DPOMPModel` instance. Observation models are generated using the `
 **Parameters**
 - `model_name`          -- the model, e.g. "SI"; "SIR"; "SEIR"; etc
 - `initial_condition`   -- initial condition.
+
+**Optional parameters**
 - `freq_dep`            -- epidemiological models only, set to `true` for frequency-dependent contact rates.
 - `obs_error`           -- average observation error (default = 2.)
 
@@ -193,9 +195,11 @@ function generate_model(model_name::String, initial_condition::Array{Int64, 1}; 
         rate_fn = freq_dep ? seir_rf_fd : seir_rf
         m_transition = [-1 1 0; 0 -1 1; 1 0 -1]
     elseif model_name == "LOTKA"
-        model_name = "PN"
+        # model_name = "PN"
         rate_fn = lotka_rf
         m_transition = [0 1; 1 -1; -1 0]
+    elseif model_name == "ROSSMAC"
+
     else
         println("ERROR: ", model_name, " not recognised.")
         # handle this better? ***
@@ -204,4 +208,32 @@ function generate_model(model_name::String, initial_condition::Array{Int64, 1}; 
     # NEED TO ADD MORE MODELS ******************
     prior = generate_weak_prior(size(m_transition, 1))
     return DPOMPModel(model_name, rate_fn, initial_condition, m_transition, dmy_obs_fn, obs_model, prior, 0)
+end
+
+
+"""
+    generate_custom_model(model_name, rate_function, initial_condition, m_transition; ... )
+
+Generates an `DPOMPModel` instance. Observation models are generated using the `generate_gaussian_obs_model` function, with ``σ = obs_error` (see that functions entry for further details.)
+
+**Parameters**
+- `model_name`          -- the model, e.g. "SIR", "SEIR-custom", etc.
+- `rate_function`       -- event rate function.
+- `initial_condition`   -- initial condition
+- `m_transition`        -- transition matrix.
+
+**Optional parameters**
+- `observation_function -- observation function, use this to add 'noise' to simulated observations.
+- `obs_error`           -- average observation error (default = 2.)
+- `observation_model`   -- observation model likelihood function.
+- `prior_density`       -- prior density function.
+- `t0_index`            -- index of the parameter that represents the initial time. `0` if fixed at `0.0`.
+
+# Examples
+
+    generate_custom_model("SIS", [100,1])
+
+"""
+function generate_custom_model(model_name::String, rate_function::Function, initial_condition::Array{Int64, 1}, m_transition::Array{Int64,2}; obs_function::Function = dmy_obs_fn, obs_error = 2.0, obs_model::Function = generate_gaussian_obs_model(obs_error; n = length(initial_condition)), prior = generate_weak_prior(size(m_transition, 1)), t0_index::Int64 = 0)
+    return DPOMPModel(model_name, rate_function, initial_condition, m_transition, obs_function, obs_model, prior, t0_index)
 end
