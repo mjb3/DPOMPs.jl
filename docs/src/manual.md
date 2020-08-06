@@ -5,6 +5,11 @@ Pages = ["manual.md"]
 Depth = 3
 ```
 
+## Index
+
+```@index
+```
+
 ## Types
 
 ```@docs
@@ -40,11 +45,6 @@ plot_parameter_heatmap
 ```
 
 ### Custom
-
-## Index
-
-```@index
-```
 
 ## References
 
