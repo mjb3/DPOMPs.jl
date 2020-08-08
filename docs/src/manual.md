@@ -68,13 +68,10 @@ plot_parameter_marginal
 plot_parameter_heatmap
 ```
 
-### Advanced: customised algorithms
+### Advanced features.
+This section covers functionality for customised algorithms.
 
 ```@docs
 run_custom_mcmc_analysis
 generate_custom_particle
 ```
-
-## References
-
-TBA

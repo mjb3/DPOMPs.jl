@@ -97,9 +97,9 @@ A `mutable struct` which represents a DSSCT model (see [Models](@ref) for furthe
 - `rate_function`       -- event rate function.
 - `initial_condition`   -- initial condition.
 - `m_transition`        -- transition matrix.
-- `observation_function -- observation function, use this to add 'noise' to simulated observations.
-- `observation_model`   -- observation model likelihood function.
-- `prior_density`       -- prior [multivariate] Distributions.Distribution.
+- `obs_function         -- observation function, use this to add 'noise' to simulated observations.
+- `obs_model`           -- observation model likelihood function.
+- `prior`               -- prior [multivariate] Distributions.Distribution.
 - `t0_index`            -- index of the parameter that represents the initial time. `0` if fixed at `0.0`.
 
 """
@@ -195,7 +195,9 @@ end
 """
     ARQMCMCSample
 
-The results of an MCMC analysis including samples; mean; covariance matrix; adaptation period; and results of the Geweke test of stationarity.
+The results of an ARQ MCMC analysis including the ImportanceSample and resampled RejectionSample.
+
+The `sre` scale factor reduction estimates relate the rejection (re)samples to the underlying importance sample.
 
 **Fields**
 - `imp_sample`      -- main results, i.e. ImportanceSample.

@@ -41,12 +41,13 @@ const C_RT_UNITS = 1000000000
 df_adapt_period(steps::Int64) = Int64(floor(steps * C_DF_MCMC_ADAPT))
 
 ### public stuffs ###
-export DPOMPModel, SimResults
+export DPOMPModel, Particle, Event, Observation
+export SimResults, ImportanceSample, RejectionSample, MCMCSample, ARQMCMCSample
 export generate_model, generate_custom_model
 export gillespie_sim, run_mcmc_analysis, run_mbp_ibis_analysis, run_smc2_analysis, run_arq_mcmc_analysis
 export plot_trajectory, plot_parameter_trace, plot_parameter_marginal, plot_parameter_heatmap
-export get_observations
-export run_custom_mcmc, generate_custom_particle
+export get_observations, tabulate_results, print_results
+export run_custom_mcmc_analysis, generate_custom_particle
 
 #### DCTMPs ####
 
