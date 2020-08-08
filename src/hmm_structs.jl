@@ -203,7 +203,7 @@ The `sre` scale factor reduction estimates relate the rejection (re)samples to t
 - `imp_sample`      -- main results, i.e. ImportanceSample.
 - `samples`         -- resamples, of type RejectionSample.
 - `adapt_period`    -- adaptation (i.e. 'burn in') period.
-- `grid_resolution` -- number of distinct [possible] sample values along each dimension in the unit cube.
+- `sample_resolution` -- number of distinct [possible] sample values along each dimension in the unit cube.
 - `sample_limit`    -- maximum number of samples per theta tupple.
 - `grid_range`      -- bounds of the parameter space.
 - `sre`             -- scale reduction factor estimate, i.e. Gelman diagnostic. NB. *only valid for resamples*.
@@ -214,7 +214,7 @@ struct ARQMCMCSample
     imp_sample::ImportanceSample
     samples::RejectionSample
     adapt_period::Int64
-    grid_resolution::Int64
+    sample_resolution::Int64
     sample_limit::Int64
     #     jitter::Float64
     grid_range::Array{Float64,2}

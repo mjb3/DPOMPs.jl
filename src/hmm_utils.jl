@@ -178,8 +178,8 @@ function print_results(results::ARQMCMCSample, dpath::String)
     isdir(dpath) || mkpath(dpath)
     ## print metadata
     open(string(dpath, "metadata.csv"), "w") do f
-        write(f, "n,adapt_period,grid_resolution,run_time,bme\narq,")
-        write(f, "$(length(results.imp_sample.mu)),$(results.adapt_period),$(results.grid_resolution),$(results.run_time),$(results.imp_sample.bme[1])")
+        write(f, "n,adapt_period,sample_resolution,run_time,bme\narq,")
+        write(f, "$(length(results.imp_sample.mu)),$(results.adapt_period),$(results.sample_resolution),$(results.run_time),$(results.imp_sample.bme[1])")
     end
     ## print grid range
     open(string(dpath, "grng.csv"), "w") do f
@@ -256,7 +256,8 @@ function tabulate_results(results::ImportanceSample)
     d[:,2] .= round.(results.mu; sigdigits = C_PR_SIGDIG)
     d[:,3] .= round.(sd; sigdigits = C_PR_SIGDIG)
     d[:,4] .= 0
-    d[1:2,4] = round.(results.bme; sigdigits = C_PR_SIGDIG)
+    bme_seq = C_DEBUG ? (1:2) : (1:1)
+    d[bme_seq, 4] = round.(results.bme[bme_seq]; sigdigits = C_PR_SIGDIG)
     PrettyTables.pretty_table(d, h)
 end
 

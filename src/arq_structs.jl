@@ -37,7 +37,7 @@ struct LikelihoodModel{PFT<:Function}
     pdf::PFT
     grid_range::Array{Float64, 2}
     ## MOVE THESE TO algorithm functions?
-    grid_resolution::Int64
+    sample_resolution::Int64
     sample_limit::Int64
     jitter::Float64
 end

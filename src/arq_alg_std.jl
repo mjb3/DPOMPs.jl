@@ -39,7 +39,7 @@ end
 ## run standard inner MCMC procedure and return results
 function arq_met_hastings!(samples::Array{Float64,3}, mc::Int64, grid::Dict, model::LikelihoodModel, steps::Int64, adapt_period::Int64, theta_i::Array{Int64, 1}, tgt_ar::Float64) #, prop_type::Int64
     C_LAR_J_MP = 0.2
-    lar_j::Int64 = round(C_LAR_J_MP * model.grid_resolution * length(theta_i))
+    lar_j::Int64 = round(C_LAR_J_MP * model.sample_resolution * length(theta_i))
     ## initialise inner MCMC
     @init_inner_mcmc
     C_DEBUG && print("- mc", mc, " initialised ")
@@ -47,7 +47,7 @@ function arq_met_hastings!(samples::Array{Float64,3}, mc::Int64, grid::Dict, mod
         ## propose new theta
         theta_f = get_theta_f(theta_i, j_w, j, 1)
         ## validate
-        if validate_theta(theta_f, model.grid_resolution)
+        if validate_theta(theta_f, model.sample_resolution)
             ## get log likelihood
             xf = get_grid_point!(grid, theta_f, model, i < a_h) # limit sample (n=1) for first interval only
             mcf[:,i] .= xf.result.sample

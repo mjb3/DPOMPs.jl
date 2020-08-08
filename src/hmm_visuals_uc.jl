@@ -19,7 +19,7 @@ function plot_trajectory(x::SimResults)
         pop[i+1, :] .= x.population[i]
     end
     ## plot
-    p = UnicodePlots.lineplot(t, pop[:,1], title = string(x.model_name, " simulation"), name = string(x.model_name[1]))
+    p = UnicodePlots.lineplot(t, pop[:,1], title = string(x.model_name, " simulation"), name = string(x.model_name[1]), ylim = [0, maximum(pop) + 1])#
     for i in 2:size(pop, 2)
         UnicodePlots.lineplot!(p, t, pop[:,i], name = string(x.model_name[i]))
     end
@@ -71,29 +71,35 @@ Plot the marginal distribution of samples from an MCMC analysis for a given mode
 - `use_is`      -- Resample IS rather than using MCMC [re]samples (`ARQMCMCSample` results only.)
 
 """
-function plot_parameter_marginal(sample::RejectionSample, parameter::Int64, adapt_period::Int64)
+function plot_parameter_marginal(sample::RejectionSample, parameter::Int64, adapt_period::Int64, nbins::Int64)
     x = sample.theta[parameter, (adapt_period+1):size(sample.theta, 2), :]
     x = reshape(x, length(x))
-    p = UnicodePlots.histogram(x, nbins = 20)
+    p = UnicodePlots.histogram(x, nbins = nbins)
     UnicodePlots.ylabel!(p, string("θ", Char(8320 + parameter)))
     UnicodePlots.xlabel!(p, "samples")
     return p
 end
 
 ## MCMC
-function plot_parameter_marginal(sample::MCMCSample, parameter::Int64)
-    return plot_parameter_marginal(sample.samples, parameter, sample.adapt_period)
+function plot_parameter_marginal(sample::MCMCSample, parameter::Int64; nbins = 20)
+    return plot_parameter_marginal(sample.samples, parameter, sample.adapt_period, nbins)
 end
 
 ## resampler
-function plot_parameter_marginal(sample::ImportanceSample, parameter::Int64)
+function plot_parameter_marginal(sample::ImportanceSample, parameter::Int64; nbins = 20)
     rs = resample_is(sample)
-    return plot_parameter_marginal(rs, parameter, 0)
+    return plot_parameter_marginal(rs, parameter, 0, nbins)
 end
 
-function plot_parameter_marginal(sample::ARQMCMCSample, parameter::Int64; use_is::Bool = false)
+function plot_parameter_marginal(sample::ARQMCMCSample, parameter::Int64; nbins = sample.sample_resolution, use_is::Bool = false)
     use_is && (return plot_parameter_marginal(sample.imp_sample, parameter))
-    return plot_parameter_marginal(sample.samples, parameter, sample.adapt_period)
+    p = plot_parameter_marginal(sample.samples, parameter, sample.adapt_period, nbins)
+    # x = sample.samples.theta[parameter, (sample.adapt_period+1):size(sample.samples.theta, 2), :]
+    # x = reshape(x, length(x))
+    # p = UnicodePlots.histogram(x, nbins = sample.sample_resolution)#, colorbar_lim = sample.grid_range[parameter,:]
+    # UnicodePlots.ylabel!(p, string("θ", Char(8320 + parameter)))
+    # UnicodePlots.xlabel!(p, "samples")
+    return p
 end
 
 
@@ -131,5 +137,7 @@ end
 ## ARQ
 function plot_parameter_heatmap(sample::ARQMCMCSample, x_parameter::Int64, y_parameter::Int64; use_is::Bool = false)
     use_is && (return plot_parameter_heatmap(sample.imp_sample, x_parameter, y_parameter))
-    return plot_parameter_heatmap(sample.samples, x_parameter, y_parameter, sample.adapt_period)
+    p = plot_parameter_heatmap(sample.samples, x_parameter, y_parameter, sample.adapt_period)
+    # UnicodePlots.xaxis!(p, sample.grid_range[x_parameter,:])
+    return p
 end

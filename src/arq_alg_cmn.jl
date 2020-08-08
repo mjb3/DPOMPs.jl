@@ -12,7 +12,7 @@ end
 function get_theta_val(model::LikelihoodModel, theta::Array{Int64, 1}, jitter = model.jitter)
     output = zeros(Float64, length(theta))
     for i in eachindex(theta)
-        gap = (model.grid_range[i, 2] - model.grid_range[i, 1]) / model.grid_resolution
+        gap = (model.grid_range[i, 2] - model.grid_range[i, 1]) / model.sample_resolution
         output[i] = model.grid_range[i, 1] + ((theta[i] - 0.5) * gap)
         jitter > 0.0 && (output[i] += (((rand() * 2) - 1) * jitter * gap))
     end
@@ -90,7 +90,7 @@ macro init_inner_mcmc()
       ## adaption interval
       a_h::Int64 = max(steps / N_ADAPT_PERIODS, 100)
       ## adaptive stuff
-      j::Int64 = round(Q_JUMP * model.grid_resolution * length(theta_i))
+      j::Int64 = round(Q_JUMP * model.sample_resolution * length(theta_i))
       j_w = StatsBase.ProbabilityWeights(ones(length(theta_i)))
       ## declare results
       mc_idx = Array{Int64, 2}(undef, length(theta_i), steps)

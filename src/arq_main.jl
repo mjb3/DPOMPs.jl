@@ -17,7 +17,7 @@ function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, b
         ## retain_samples or clear IS
         # retain_samples || (grid = Dict())
         ## choose initial theta coords
-        theta_init = rand(1:mdl.grid_resolution, n_theta)
+        theta_init = rand(1:mdl.sample_resolution, n_theta)
         print(" initialising chain ", i, ": θ ~ ", round.(get_theta_val(mdl, theta_init, 0.0); sigdigits = C_PR_SIGDIG + 1))
         ## run inner MCMC using designated function
         # mcmc[i] = mcmc_fn(samples, i, grid, mdl, steps, burnin, theta_init, tgt_ar)
@@ -33,10 +33,10 @@ function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, b
     cv = zeros(length(is_mu),length(is_mu))
     # shared HMM fn:
     compute_is_mu_covar!(is_mu, cv, theta_w[1], theta_w[2]) #estimate_model_evidence(Statistics.mean(theta_w[2]))
-    is_output = ImportanceSample(is_mu, cv, theta_w[1], theta_w[2], 0, [estimate_model_evidence(sum(theta_w[2]) / (mdl.grid_resolution ^ length(is_mu)))])
+    is_output = ImportanceSample(is_mu, cv, theta_w[1], theta_w[2], 0, [estimate_model_evidence(sum(theta_w[2]) / (mdl.sample_resolution ^ length(is_mu)))])
     ## return results
-    output = ARQMCMCSample(is_output, rejs, burnin, mdl.grid_resolution, mdl.sample_limit, mdl.grid_range, sre, time_ns() - start_time)
-    # output = ARQMCMCResults(da ? C_ALG_DA : C_ALG_STD, time_ns() - start_time, mdl.grid_resolution, mdl.sample_limit, mdl.jitter, steps, burnin, gmn[1], gmn[2], gmn[3], mdl.grid_range, grid, is_mu, estimate_model_evidence(is_uc), gmn[4], gmn[5], gmn[6], samples, mcmc)
+    output = ARQMCMCSample(is_output, rejs, burnin, mdl.sample_resolution, mdl.sample_limit, mdl.grid_range, sre, time_ns() - start_time)
+    # output = ARQMCMCResults(da ? C_ALG_DA : C_ALG_STD, time_ns() - start_time, mdl.sample_resolution, mdl.sample_limit, mdl.jitter, steps, burnin, gmn[1], gmn[2], gmn[3], mdl.grid_range, grid, is_mu, estimate_model_evidence(is_uc), gmn[4], gmn[5], gmn[6], samples, mcmc)
     println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s. (Iμ = ", round.(is_output.mu; sigdigits = C_PR_SIGDIG), "; Rμ = ", round.(rejs.mu; sigdigits = C_PR_SIGDIG), "; BME = ", round.(output.imp_sample.bme[1]; sigdigits = C_PR_SIGDIG), ")")
     return output
 end
@@ -157,7 +157,7 @@ end
 #         ## retain_samples && (grid = mcmc[i].grid)
 #         retain_samples || (grid = Dict())
 #         ## choose initial theta coords
-#         theta_init = rand(1:mdl.grid_resolution, length(is_mu))    #length(DF_THETA)
+#         theta_init = rand(1:mdl.sample_resolution, length(is_mu))    #length(DF_THETA)
 #         theta_i = get_theta_val(mdl, theta_init)
 #         print(" initialising chain ", i, ": θ = ", round.(theta_i; sigdigits = C_PR_SIGDIG + 1))
 #         ## initialise x0
@@ -176,7 +176,7 @@ end
 #         is_mu ./= length(mcmc)
 #     end
 #     ## return results
-#     output = ARQMCMCResults(C_ALG_DAUG, time_ns() - start_time, mdl.grid_resolution, mdl.sample_limit, mdl.jitter, steps, burnin, gmn[1], gmn[2], gmn[3], mdl.grid_range, grid, is_mu, 0.0, gmn[4], gmn[5], gmn[6], mcmc) #, prop_type
+#     output = ARQMCMCResults(C_ALG_DAUG, time_ns() - start_time, mdl.sample_resolution, mdl.sample_limit, mdl.jitter, steps, burnin, gmn[1], gmn[2], gmn[3], mdl.grid_range, grid, is_mu, 0.0, gmn[4], gmn[5], gmn[6], mcmc) #, prop_type
 #     println("finished (sample μ = ", round.(output.mu; sigdigits = C_PR_SIGDIG), ").")
 #     return output
 # end
