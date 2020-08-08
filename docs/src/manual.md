@@ -1,18 +1,16 @@
 # Package manual
-
 ```@contents
 Pages = ["manual.md"]
 Depth = 3
 ```
 
 ## Index
-
 ```@index
 ```
 
 ## Types
 
-### Model
+### Model types
 ```@docs
 DPOMPModel
 Particle
@@ -21,7 +19,6 @@ Observation
 ```
 
 ### Results
-
 ```@docs
 SimResults
 ImportanceSample
@@ -69,7 +66,7 @@ plot_parameter_heatmap
 ```
 
 ### Advanced features.
-This section covers functionality for customised algorithms.
+This section covers functionality for customising the algorithms themselves.
 
 ```@docs
 run_custom_mcmc_analysis

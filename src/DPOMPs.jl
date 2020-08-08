@@ -92,6 +92,14 @@ Run a Doob-Gillespie simulation on `model`. Returns a SimResults type containing
 - `n_obs`       -- the number of observations to draw (default: 5.)
 - `n_sims`      -- number of simulations to draw (default: 1.)
 
+**Example**
+```@repl
+using DPOMPs
+m = generate_model("SIR", [50, 1, 0])
+x = DPOMPs.gillespie_sim(model, [0.005, 0.12])
+println(DPOMPs.plot_trajectory(x))
+```
+
 """
 function gillespie_sim(model::DPOMPModel, parameters::Array{Float64, 1}; tmax::Float64 = 100.0, num_obs::Int64 = 5, n_sims::Int64 = 1)
     y = generate_observations(tmax, num_obs, length(model.initial_condition))
@@ -114,7 +122,7 @@ function gillespie_sim(model::DPOMPModel, parameters::Array{Float64, 1}; tmax::F
 end
 
 """
-    run_mcmc_analysis(model, obs_data, initial_parameters, steps = 50000, adapt_period = 10000, mbp = true, ppp = 0.3)
+    run_mcmc_analysis(model, obs_data; ... )
 
 Run an `n_chains`-MCMC analysis. The `initial_parameters` are sampled from the prior distribution unless otherwise specified by the user.
 
@@ -138,13 +146,10 @@ Otherwise the results of a single-chain analysis are returned, which include the
 
 **Example**
 ```@repl
-import Random
-Random.seed!(1)
-
-using DPOMPs
-m = generate_model("SIR", [50, 1, 0])
-x = DPOMPs.gillespie_sim(model, [0.005, 0.12])
-println(DPOMPs.plot_trajectory(x))
+y = x.observations                          # some simulated data
+model = generate_model("SIR", [50, 1, 0])   # a model
+results = run_mcmc_analysis(model, y; fin_adapt = true) # finite-adaptive MCMC
+tabulate_results(results)                   # optionally, show the results
 ```
 
 """
@@ -159,18 +164,27 @@ end
 
 ## MBP IBIS algorithm
 """
-    run_mbp_ibis_analysis(model, obs_data, initial_parameters, ess_rs_crit = 0.5; n_props = 3, ind_prop = false, alpha = 1.002)
+    run_mbp_ibis_analysis(model, obs_data; ... )
 
 Run an MBP IBIS analysis based on `model` and `obs_data` of type `Observations`.
 
 **Parameters**
 - `model`               -- `DPOMPModel` (see [DCTMPs.jl models]@ref).
 - `obs_data`            -- `Observations` data.
-- `np`                  -- number of particles (default = 2000.)
+
+**Optional**
+- `np`                  -- number of particles (default = 4000.)
 - `ess_rs_crit`         -- resampling criteria (default = 0.5.)
 - `n_props`             -- MBP mutations per step (default = 3.)
 - `ind_prop`            -- true for independent theta proposals (default = false.)
 - `alpha`               -- user-defined, increase for lower acceptance rate targeted (default = 1.002.)
+
+**Example**
+```@repl
+# NB. using 'y' and 'model' as above
+results = run_mbp_ibis_analysis(model, y)# importance sample
+tabulate_results(results)                # show the results
+```
 
 """
 function run_mbp_ibis_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; np = 4000, ess_rs_crit = C_DF_ESS_CRIT, n_props = 3, ind_prop = false, alpha = 1.002)
@@ -182,18 +196,27 @@ end
 
 #### SMC ####
 """
-    run_smc2_analysis(model, obs_data, initial_parameters, ess_rs_crit = 0.5; n_props = 3, ind_prop = false, alpha = 1.002)
+    run_smc2_analysis(model, obs_data; ... )
 
 Run an SMC^2 (i.e. particle filter IBIS) analysis based on `model` and `obs_data` of type `Observations`.
 
 **Parameters**
 - `model`               -- `DPOMPModel` (see [DCTMPs.jl models]@ref).
 - `obs_data`            -- `Observations` data.
-- `np`                  -- number of particles (default = 2000.)
+
+**Optional**
+- `np`                  -- number of [outer, i.e. theta] particles (default = 2000.)
+- `npf`                 -- number of [inner] particles (default = 200.)
 - `ess_rs_crit`         -- resampling criteria (default = 0.5.)
-- `n_props`             -- MBP mutations per step (default = 3.)
 - `ind_prop`            -- true for independent theta proposals (default = false.)
 - `alpha`               -- user-defined, increase for lower acceptance rate targeted (default = 1.002.)
+
+**Example**
+```@repl
+# NB. using 'y' and 'model' as above
+results = run_smc2_analysis(model, y)   # importance sample
+tabulate_results(results)               # show the results
+```
 
 """
 function run_smc2_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; np = 2000, npf = 200, ess_rs_crit = C_DF_ESS_CRIT, ind_prop = true, alpha = 1.002)

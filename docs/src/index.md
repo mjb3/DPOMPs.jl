@@ -9,9 +9,9 @@
 ## What are DPOMP models?
 **Discrete-state-space (DSS)** models are used throughout ecology and other domains to represent systems of interacting components (e.g. people or molecules.)
 
-A well-known example is the Kermack-McKendrick SIR model:
+A well-known example is the **Kermack-McKendrick susceptible-infectious-susceptible (SIR)** model:
 ```@raw html
-<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sir.png" alt="SIR model" style="height: 60px;"/>
+<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sir.png" alt="SIR model" style="height: 80px;"/>
 ```
 
 In applied scientific situations, such systems are often difficult to directly observe, and so they are referred to in context as **Partially Observed**.
@@ -28,11 +28,11 @@ Given some (partially complete) data however, these concepts yield a paradigm fo
 
 * Bayesian parameter inference, and
 * Simulation of,
-* Discrete-state-space Partially Observed Markov Processes, in Julia.
-* It also includes automated tools for convergence diagnosis and analysis.
+* *Discrete*-state-space *Partially Observed Markov Processes*, in Julia.
+* It also includes automated tools for things like convergence diagnosis, model assessment and analysis.
 
 ## Installation
-See the package [source code repository][https://github.com/mjb3/DPOMPs.jl] for instructions.
+See the package [source code repository](https://github.com/mjb3/DPOMPs.jl) for instructions on how to install the package.
 
 ## Overview
 
