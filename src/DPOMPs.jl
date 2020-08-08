@@ -116,15 +116,15 @@ end
 """
     run_mcmc_analysis(model, obs_data, initial_parameters, steps = 50000, adapt_period = 10000, mbp = true, ppp = 0.3)
 
+Run an `n_chains`-MCMC analysis. The `initial_parameters` are sampled from the prior distribution unless otherwise specified by the user.
+
+A Gelman-Rubin convergence diagnostic is automatically carried out for n_chains > 1 and included in the [multi-chain] analysis results.
+
+Otherwise the results of a single-chain analysis are returned, which include the Geweke test statistics computed for that analysis.
+
 **Parameters**
 - `model`               -- `DPOMPModel` (see [DCTMPs.jl models]@ref).
 - `obs_data`            -- `Observations` data.
-
-Run an `n_chains`-MCMC analysis. The `initial_parameters` are sampled from the prior distribution unless otherwise specified by the user.
-
-A Gelman-Rubin convergence diagnostic is automatically carried out for n_chains > 1 and included in the [multi-chain] results.
-
-Otherwise the results of a single-chain analysis are returned, which include the Geweke test statistics computed for that analysis.
 
 **Optional**
 - `n_chains`            -- number of Markov chains (optional, default: 3.)
@@ -135,6 +135,17 @@ Otherwise the results of a single-chain analysis are returned, which include the
 - `ppp`                 -- the proportion of parameter (vs. trajectory) proposals in Gibbs sampler. Default: 30%. NB. not required for MBP.
 - `fin_adapt`           -- finite adaptive algorithm. The default is `false`, i.e. [fully] adaptive.
 - `mvp`                 -- increase for a higher proportion of 'move' proposals. NB. not applicable if `MBP = true` (default: 2.)
+
+**Example**
+```@repl
+import Random
+Random.seed!(1)
+
+using DPOMPs
+m = generate_model("SIR", [50, 1, 0])
+x = DPOMPs.gillespie_sim(model, [0.005, 0.12])
+println(DPOMPs.plot_trajectory(x))
+```
 
 """
 function run_mcmc_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; n_chains::Int64 = 3, initial_parameters = rand(model.prior, n_chains), steps::Int64 = C_DF_MCMC_STEPS, adapt_period::Int64 = Int64(floor(steps * C_DF_MCMC_ADAPT)), fin_adapt::Bool = false, mbp::Bool = true, ppp::Float64 = 0.3, mvp::Int64 = 2)

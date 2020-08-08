@@ -150,16 +150,17 @@ function print_imp_sample(results::ImportanceSample, dpath::String)
     print_sample_summary(results, string(dpath, "is_"))
 end
 
+## print importance sample results
 """
     print_results
 
+Print the results of a parameter inference analysis to file.
+
 **Parameters**
-- `samples`     -- a data structure of type `MCMCSample`, `ImportanceSample` or `ARQMCMCSample`.
+- `samples`     -- a data structure of type `SimResults`, `ImportanceSample`, `MCMCSample` or `ARQMCMCSample`.
 - `dpath`       -- the directory where the results will be saved.
 
-Print the results of an inference analysis to file.
 """
-## print importance sample results
 function print_results(results::ImportanceSample, dpath::String)
     # check dir
     isdir(dpath) || mkpath(dpath)
