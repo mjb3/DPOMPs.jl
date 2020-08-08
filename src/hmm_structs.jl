@@ -1,10 +1,32 @@
 ## event
+"""
+    Event
+
+Requires no explanation.
+
+**Fields**
+- `time`        -- the time of the event.
+- `event_type`  -- indexes the rate function and transition matrix.
+
+"""
 struct Event
     time::Float64
     event_type::Int64
 end
 
 ## observation tuple
+"""
+    Observation
+
+A single observation. Note that by default `val` has the same size as the model state space. However that is not necessary - it need only be compatible with the observation model.
+
+**Fields**
+- `time`        -- similar to `Event.time`, the time of the observation.
+- `obs_id`      -- <1 if not a resampling step.
+- `prop`        -- optional information for the observation model.
+- `val`         -- the observation value.
+
+"""
 struct Observation
     time::Float64
     obs_id::Int64   # <1 if not a resampling step
@@ -13,13 +35,27 @@ struct Observation
 end
 
 ## a single realisation of the model
+"""
+    Particle
+
+E.g. the main results of a simulation including the initial and final conditions, but not the full state trajectory.
+
+**Fields**
+- `theta`               -- e.g. simulation parameters.
+- `initial_condition`   -- initial system state.
+- `final_condition`     -- final system state.
+- `trajectory`          -- the event history.
+- `log_like`            -- trajectory log likelihood, mainly for internal use.
+
+"""
 struct Particle
     theta::Array{Float64,1}
     initial_condition::Array{Int64}
     final_condition::Array{Int64}
     trajectory::Array{Event,1}
-    log_like::Array{Float64,1}  # log prior; full log like g(x); [latest] marginal g(x)
+    log_like::Array{Float64,1}  # log prior; full log like g(x); [latest] marginal g(x) / proposal likelihood (SMC / MCMC)
 end
+
 # - for dependent f/g
 struct DFGParticle
     theta::Array{Float64,1}
@@ -34,13 +70,14 @@ end
 """
     SimResults
 
+The results of a simulation, including the full state trajectory.
+
 **Fields**
 - `model_name`      -- string, e,g, `"SIR"`.
 - `particle`        -- the 'trajectory' variable, of type `Particle`.
 - `population`      -- records the final system state.
 - `observations`    -- simulated observations data (an `Array` of `Observation` types.)
 
-The results of a simulation.
 """
 struct SimResults
     model_name::String
@@ -53,17 +90,18 @@ end
 """
     DPOMPModel
 
+A `mutable struct` which represents a DSSCT model (see [Models](@ref) for further details).
+
 **Fields**
 - `model_name`          -- string, e,g, `"SIR"`.
 - `rate_function`       -- event rate function.
-- `initial_condition`   -- initial condition
+- `initial_condition`   -- initial condition.
 - `m_transition`        -- transition matrix.
 - `observation_function -- observation function, use this to add 'noise' to simulated observations.
-- `prior_density`       -- prior density function.
 - `observation_model`   -- observation model likelihood function.
+- `prior_density`       -- prior [multivariate] Distributions.Distribution.
 - `t0_index`            -- index of the parameter that represents the initial time. `0` if fixed at `0.0`.
 
-A `mutable struct` which represents a DSSCT model (see [Discuit.jl models](@ref) for further details).
 """
 mutable struct DPOMPModel
     model_name::String                  # model name
@@ -92,6 +130,17 @@ struct HiddenMarkovModel{RFT<:Function, ICT<:Function, TFT<:Function, OFT<:Funct
 end
 
 ## generic rejection sample
+"""
+    RejectionSample
+
+Essentially, the main results of an MCMC analysis, consisting of samples, mean, and covariance matrix.
+
+**Fields**
+- `samples`         -- three dimensional array of samples, e.g. parameter; iteration; Markov chain.
+- `mu`              -- sample mean.
+- `cv`              -- sample covariance matrix.
+
+"""
 struct RejectionSample
     theta::Array{Float64,3}         # dims: theta index; chain; sample
     mu::Array{Float64,1}
@@ -99,6 +148,20 @@ struct RejectionSample
 end
 
 ## IBIS sample
+"""
+    ImportanceSample
+
+The results of an importance sampling analysis, such as iterative batch importance sampling algorithms.
+
+**Fields**
+- `mu`              -- weighted sample mean.
+- `cv`              -- weighted covariance.
+- `theta`           -- two dimensional array of samples, e.g. parameter; iteration.
+- `weight`          -- sample weights.
+- `run_time`        -- application run time.
+- `bme`             -- Estimate (or approximation) of the Bayesian model evidence.
+
+"""
 struct ImportanceSample
     mu::Array{Float64,1}
     cv::Array{Float64,2}
@@ -109,6 +172,18 @@ struct ImportanceSample
 end
 
 ## MBP MCMC, PMCMC
+"""
+    MCMCSample
+
+The results of an MCMC analysis, mainly consisting of a `RejectionSample`.
+
+**Fields**
+- `samples`         -- samples of type `RejectionSample`.
+- `adapt_period`    -- adaptation (i.e. 'burn in') period.
+- `sre`             -- scale reduction factor estimate, i.e. Gelman diagnostic.
+- `run_time`        -- application run time.
+
+"""
 struct MCMCSample
     samples::RejectionSample
     adapt_period::Int64
@@ -117,7 +192,22 @@ struct MCMCSample
 end
 
 ## ARQMCMC
-# ADD process count? **
+"""
+    ARQMCMCSample
+
+The results of an MCMC analysis including samples; mean; covariance matrix; adaptation period; and results of the Geweke test of stationarity.
+
+**Fields**
+- `imp_sample`      -- main results, i.e. ImportanceSample.
+- `samples`         -- resamples, of type RejectionSample.
+- `adapt_period`    -- adaptation (i.e. 'burn in') period.
+- `grid_resolution` -- number of distinct [possible] sample values along each dimension in the unit cube.
+- `sample_limit`    -- maximum number of samples per theta tupple.
+- `grid_range`      -- bounds of the parameter space.
+- `sre`             -- scale reduction factor estimate, i.e. Gelman diagnostic. NB. *only valid for resamples*.
+- `run_time`        -- application run time.
+
+"""
 struct ARQMCMCSample
     imp_sample::ImportanceSample
     samples::RejectionSample

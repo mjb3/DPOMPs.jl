@@ -159,7 +159,10 @@ end
 function generate_x0(model::HiddenMarkovModel, theta::Array{Float64, 1}, ntries = 100000)
     for i in 1:ntries
         x0 = gillespie_sim(model, theta, false).particle
-        sum(x0.log_like) != -Inf && (return x0)
+        if x0.log_like[2] != -Inf
+            x0.log_like[1] = Distributions.logpdf(model.prior, theta)
+            return x0
+        end
     end
     ## ADD PROPER ERR HANDLING ***
     println("WARNING: having an issue generating a valid trajectory for ", theta)

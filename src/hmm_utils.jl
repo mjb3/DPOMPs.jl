@@ -13,7 +13,7 @@
     get_observations(source)
 
 **Parameters**
-- `source`      -- `Array`, `DataFrame` or filepath (i.e. `String`) containing the data (with times in the first column).
+- `source`      -- `DataFrame` or filepath (i.e. `String`) containing the data (with times in the first column).
 
 Create and return an array of type `Observation` based on a two dimensional array, `DataFrame` or file location.
 """
@@ -22,6 +22,7 @@ function get_observations(df::DataFrames.DataFrame)
     for i in 1:size(df,1)
         push!(obs, Observation(df[i,1],df[i,2], 1.0, df[i,3:size(df,2)]))
     end
+    sort!(obs)
     return obs
     # return Observations(df[1], df[2], df[3:size(df, 2)])
 end

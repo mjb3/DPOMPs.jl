@@ -1,26 +1,10 @@
 #### model based proposal (Pooley, 2015) ####
 
-## DEBUG: use for std?
-function check_particle_log_like(p::Particle, model::HiddenMarkovModel, ymax::Int64)
-    pop = copy(p.initial_condition)
-    evt_i = 1
-    output = zeros(2)
-    for obs_i in 1:ymax
-        while evt_i <= length(p.trajectory)
-            p.trajectory[evt_i].time > model.obs_data[obs_i].time && break
-            et::Int64 = p.trajectory[evt_i].event_type
-            # output[2] += 
-            pop .+= model.fn_transition(et)
-            evt_i += 1
-        end
-        output[2] += model.obs_model(model.obs_data[obs_i], pop, p.theta)
-    end
-    return output
-end
+
 
 ## iterator
 # - ADJUST FOR SMC?
-function iterate_mbp!(xf, pop_i::Array{Int64}, model::HiddenMarkovModel, obs_i::Int64, evt_i::Int64, time::Float64, xi)
+function iterate_mbp!(xf, pop_i::Array{Int64}, model::HiddenMarkovModel, obs_i::Int64, evt_i::Int64, time::Float64, xi::Particle)
     ## workspace
     # - zeros(model.n_events)
     lambda_f = Array{Float64,1}(undef, model.n_events)

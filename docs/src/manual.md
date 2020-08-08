@@ -12,9 +12,22 @@ Depth = 3
 
 ## Types
 
+### Model
 ```@docs
 DPOMPModel
+Particle
+Event
+Observation
+```
+
+### Results
+
+```@docs
 SimResults
+ImportanceSample
+RejectionSample
+MCMCSample
+ARQMCMCSample
 ```
 
 ## Functions
@@ -55,7 +68,12 @@ plot_parameter_marginal
 plot_parameter_heatmap
 ```
 
-### Custom
+### Advanced: customised algorithms
+
+```@docs
+run_custom_mcmc_analysis
+generate_custom_particle
+```
 
 ## References
 

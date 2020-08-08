@@ -27,15 +27,18 @@ import CSV
 import PrettyTables
 import UnicodePlots     # https://github.com/Evizero/UnicodePlots.jl
 import StatsBase
+import Random           # for bitrand() function in arq
 
 ### global constants
 const MAX_TRAJ = 196000
 const C_PR_SIGDIG = 3
-const C_DF_ITER = 50000
-const C_DF_ADAPT = 10000
+const C_DF_MCMC_STEPS = 50000
+const C_DF_MCMC_ADAPT = 0.2
 const C_DF_ESS_CRIT = 0.3
 const C_DEBUG = false
 const C_RT_UNITS = 1000000000
+
+df_adapt_period(steps::Int64) = Int64(floor(steps * C_DF_MCMC_ADAPT))
 
 ### public stuffs ###
 export DPOMPModel, SimResults
@@ -43,18 +46,23 @@ export generate_model, generate_custom_model
 export gillespie_sim, run_mcmc_analysis, run_mbp_ibis_analysis, run_smc2_analysis, run_arq_mcmc_analysis
 export plot_trajectory, plot_parameter_trace, plot_parameter_marginal, plot_parameter_heatmap
 export get_observations
+export run_custom_mcmc, generate_custom_particle
 
 #### DCTMPs ####
 
 ## types ###
 include("hmm_structs.jl")
+import Base: isless
+isless(a::Event, b::Event) = isless(a.time, b.time)
+isless(a::Observation, b::Observation) = isless(a.time, b.time)
+
 ## common ###
 include("hmm_cmn.jl")
 ## Gillespie simulation ###
 include("hmm_sim.jl")
 ## MCMC ###
 include("hmm_mbp.jl")
-# include("hmm_std.jl")
+include("hmm_std.jl")
 include("hmm_mcmc.jl")
 ## generalised HMM pf ###
 include("hmm_pf_resample.jl")
@@ -111,6 +119,12 @@ end
 - `model`               -- `DPOMPModel` (see [DCTMPs.jl models]@ref).
 - `obs_data`            -- `Observations` data.
 
+Run an `n_chains`-MCMC analysis. The `initial_parameters` are sampled from the prior distribution unless otherwise specified by the user.
+
+A Gelman-Rubin convergence diagnostic is automatically carried out for n_chains > 1 and included in the [multi-chain] results.
+
+Otherwise the results of a single-chain analysis are returned, which include the Geweke test statistics computed for that analysis.
+
 **Optional**
 - `n_chains`            -- number of Markov chains (optional, default: 3.)
 - `initial_parameters`  -- 2d array of initial model parameters. Each column vector correspondes to a single model parameter.
@@ -119,19 +133,15 @@ end
 - `mbp`                 -- model based proposals (MBP). Set `mbp = false` for standard proposals.
 - `ppp`                 -- the proportion of parameter (vs. trajectory) proposals in Gibbs sampler. Default: 30%. NB. not required for MBP.
 - `fin_adapt`           -- finite adaptive algorithm. The default is `false`, i.e. [fully] adaptive.
+- `mvp`                 -- increase for a higher proportion of 'move' proposals. NB. not applicable if `MBP = true` (default: 2.)
 
-Run an `n_chains`-MCMC analysis. The `initial_parameters` are sampled from the prior distribution unless otherwise specified by the user.
-
-A Gelman-Rubin convergence diagnostic is automatically carried out for n_chains > 1 and included in the [multi-chain] results.
-
-Otherwise the results of a single-chain analysis are returned, which include the Geweke test statistics computed for that analysis.
 """
-function run_mcmc_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; n_chains::Int64 = 3, initial_parameters = rand(model.prior, n_chains), steps::Int64 = 50000, adapt_period::Int64 = Int64(floor(steps / 5)), mbp::Bool = true, ppp::Float64 = 0.3, fin_adapt::Bool = false)
+function run_mcmc_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; n_chains::Int64 = 3, initial_parameters = rand(model.prior, n_chains), steps::Int64 = C_DF_MCMC_STEPS, adapt_period::Int64 = Int64(floor(steps * C_DF_MCMC_ADAPT)), fin_adapt::Bool = false, mbp::Bool = true, ppp::Float64 = 0.3, mvp::Int64 = 2)
     mdl = get_private_model(model, obs_data)
     if mbp
         return run_mbp_mcmc(mdl, initial_parameters, steps, adapt_period, fin_adapt)
     else
-        println("TBA: Gibbs")
+        return run_std_mcmc(mdl, initial_parameters, steps, adapt_period, fin_adapt, ppp, mvp)
     end
 end
 

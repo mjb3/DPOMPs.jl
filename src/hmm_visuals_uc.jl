@@ -74,7 +74,7 @@ Plot the marginal distribution of samples from an MCMC analysis for a given mode
 function plot_parameter_marginal(sample::RejectionSample, parameter::Int64, adapt_period::Int64)
     x = sample.theta[parameter, (adapt_period+1):size(sample.theta, 2), :]
     x = reshape(x, length(x))
-    p = UnicodePlots.histogram(x, nbins = 30)
+    p = UnicodePlots.histogram(x, nbins = 20)
     UnicodePlots.ylabel!(p, string("θ", Char(8320 + parameter)))
     UnicodePlots.xlabel!(p, "samples")
     return p
