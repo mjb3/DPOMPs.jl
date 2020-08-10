@@ -152,10 +152,10 @@ Plot the Bayesian model evidence (BME) from a model comparison analysis, using [
 
 **Parameters**
 - `results`   -- `ModelComparisonResults`, i.e. from a call to `run_model_comparison_analysis`.
-- `boxplot`   -- `true` (default) for a series of boxplots, else a simple UnicodePlots.barplot showing only the average BME for each model variant.
+- `boxplot`   -- `true` for a series of boxplots, else a simple UnicodePlots.barplot showing only the average BME for each model variant (default.)
 
 """
-function plot_model_evidence(results::ModelComparisonResults, boxplot = true)
+function plot_model_evidence(results::ModelComparisonResults, boxplot = false)
     if boxplot
         return UnicodePlots.boxplot(results.names, [results.bme[:, i] for i in 1:size(results.bme,2)], title = "Model evidence", xlabel = "BME")
     else

@@ -48,10 +48,9 @@ run_mcmc_analysis
 run_mbp_ibis_analysis
 run_smc2_analysis
 run_arq_mcmc_analysis
-run_model_comparison_analysis
 ```
 
-### Bayesian_model_analysis
+### Bayesian model analysis
 
 ```@docs
 run_model_comparison_analysis
