@@ -13,7 +13,7 @@
 ### Epidemiological models
 
 #### SIR model
-The canonical Kermack-McKendrick susceptible-infectious-recovered model is perhaps the best known example of state-space models within epidemiology.
+The canonical Kermack-McKendrick susceptible-infectious-recovered model is perhaps the best known example of state-space models used within the field of epidemiology.
 
 ```@raw html
 <img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sir.png" alt="SIR model" style="height: 80px;"/>
@@ -24,7 +24,7 @@ generate_model("SIR", [100, 1, 0])
 ```
 
 #### SI model
-The susceptible-infectious model is the simplest conceptual example; two states and only one type event.
+The susceptible-infectious model is the simplest conceptual example of this class of model; two states and only one type of event.
 
 ```@raw html
 <img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/si.png" alt="SI model" style="height: 80px;"/>

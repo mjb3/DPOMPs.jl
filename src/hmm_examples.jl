@@ -42,19 +42,14 @@ end
 
 ## gaussian observation likelihood model
 """
-    generate_gaussian_obs_model(σ = 2.0; n = 2, seq = 2:n, y_seq = seq)
+    partial_gaussian_obs_model(σ = 2.0; seq = 2, y_seq = seq)
 
-Generate a Gaussian observation model for a model with `n` states. Optionally specify observation error `σ`.
-
-These are assumed to be normally distributed according to~N(0, σ).
-
-It is assumed by default (`n = 2`) that all states are [effectively] observed  -- though it is not judged necessary to directly observe the first state if the total population size is known.
+Generate a simple Gaussian observation model. So-called because the accuracy of observations is 'known' and [assumed to be] normally distributed according to~N(0, σ), where observation error `σ` can be specified by the user.
 
 **Parameters**
 - `σ`       -- observation error.
-- `n`       -- populate for a model where [the sum of] states `2:n` are observed.
-- `seq`     -- as above, for the indexing sequence provided, e.g. `2` for that state only.
-- `y_seq`   -- the corresponding [indexing] values for the observations data, `seq` unless otherwise specified.
+- `seq`     -- the indexing sequence of the observed state, e.g. `2` for that state only, `3:4` for the third and fourth, etc.
+- `y_seq`   -- as above, the corresponding [indexing] values for the observations data, `seq` unless otherwise specified.
 
 test latex eqn:
 
@@ -64,33 +59,26 @@ test latex eqn:
 
 # Examples
 
-    p = generate_gaussian_obs_model(2)
+    p = partial_gaussian_obs_model(1.0, seq = 2)
 
 """
 
 ## generic Gaussian obs model generator
-function generate_gaussian_obs_model(σ::Float64 = 2.0; n::Int = 2, seq = 2:n, y_seq = seq)
+function partial_gaussian_obs_model(σ::Float64 = 2.0; seq = 2:2, y_seq = seq)
     # do some preliminary computation
     tmp1 = log(1 / (sqrt(2 * pi) * σ))
     tmp2 = 2 * σ * σ
-    if n == 2   # merge?
-        function gom1(y::Observation, population::Array{Int64,1}, theta::Array{Float64,1})
-            return tmp1 - ( ( (y.val[2] - population[2])^2 ) / tmp2 )
-        end
-        return gom1
-    else
-        function gom2(y::Observation, population::Array{Int64,1}, theta::Array{Float64,1})
-            return tmp1 - (( (sum(y.val[seq]) - sum(population[seq])) ^ 2 ) / tmp2)
-        end
-        return gom2
+    function gom2(y::Observation, population::Array{Int64,1}, theta::Array{Float64,1})
+        return tmp1 - (( (sum(y.val[y_seq]) - sum(population[seq])) ^ 2 ) / tmp2)
     end
+    return gom2
 end
 
 ## PUBLIC FUNCTION
 """
     generate_model(model_name, initial_condition; freq_dep = false, obs_error = 2.0)
 
-Generates an `DPOMPModel` instance. Observation models are generated using the `generate_gaussian_obs_model` function, with ``σ = obs_error` (see that functions entry for further details.)
+Generates an `DPOMPModel` instance. Observation models are generated using the `partial_gaussian_obs_model` function, with ``σ = obs_error` (see that functions entry for further details.)
 
 **Parameters**
 - `model_name`          -- the model, e.g. "SI"; "SIR"; "SEIR"; etc
@@ -173,39 +161,42 @@ function generate_model(model_name::String, initial_condition::Array{Int64, 1}; 
         output[3] = parameters[3] * population[1]
     end
 
-    ### DO:
-    # force to upper case here ***
-    obs_model = generate_gaussian_obs_model(obs_error; n = length(initial_condition))
+    ### MODEL
     if model_name == "SI"
         rate_fn = freq_dep ? si_rf_fd : si_rf
         m_transition = [-1 1;]
+        obs_model = partial_gaussian_obs_model(obs_error)
     elseif model_name == "SIR"
         rate_fn = freq_dep ? sir_rf_fd : sir_rf
         m_transition = [-1 1 0; 0 -1 1]
+        obs_model = partial_gaussian_obs_model(obs_error)
     elseif model_name == "SIS"
         rate_fn = freq_dep ? sir_rf_fd : sir_rf
         m_transition = [-1 1; 1 -1]
+        obs_model = partial_gaussian_obs_model(obs_error)
     elseif model_name == "SEI"
         rate_fn = freq_dep ? sei_rf_fd : sei_rf
         m_transition = [-1 1 0; 0 -1 1]
+        obs_model = partial_gaussian_obs_model(obs_error; seq = 3)
     elseif model_name == "SEIR"
         rate_fn = freq_dep ? seir_rf_fd : seir_rf
         m_transition = [-1 1 0 0; 0 -1 1 0; 0 0 -1 1]
+        obs_model = partial_gaussian_obs_model(obs_error; seq = 3)
     elseif model_name == "SEIS"
         rate_fn = freq_dep ? seir_rf_fd : seir_rf
         m_transition = [-1 1 0; 0 -1 1; 1 0 -1]
+        obs_model = partial_gaussian_obs_model(obs_error; seq = 3)
     elseif model_name == "LOTKA"
         # model_name = "PN"
         rate_fn = lotka_rf
         m_transition = [0 1; 1 -1; -1 0]
+        obs_model = partial_gaussian_obs_model(obs_error)
     elseif model_name == "ROSSMAC"
 
     else
-        println("ERROR: ", model_name, " not recognised.")
-        # handle this better? ***
-        return 0
+        println(" - SORRY: model name '", model_name, "' not recognised.")
+        return  # handle this better? ***
     end
-    # NEED TO ADD MORE MODELS ******************
     prior = generate_weak_prior(size(m_transition, 1))
     return DPOMPModel(model_name, rate_fn, initial_condition, m_transition, dmy_obs_fn, obs_model, prior, 0)
 end
@@ -214,7 +205,7 @@ end
 """
     generate_custom_model(model_name, rate_function, initial_condition, m_transition; ... )
 
-Generates an `DPOMPModel` instance. Observation models are generated using the `generate_gaussian_obs_model` function, with ``σ = obs_error` (see that functions entry for further details.)
+Generates an `DPOMPModel` instance. Observation models are generated using the `partial_gaussian_obs_model` function, with ``σ = obs_error` (see that functions entry for further details.)
 
 **Parameters**
 - `model_name`          -- the model, e.g. "SIR", "SEIR-custom", etc.
@@ -234,6 +225,6 @@ Generates an `DPOMPModel` instance. Observation models are generated using the `
     generate_custom_model("SIS", [100,1])
 
 """
-function generate_custom_model(model_name::String, rate_function::Function, initial_condition::Array{Int64, 1}, m_transition::Array{Int64,2}; obs_function::Function = dmy_obs_fn, obs_error = 2.0, obs_model::Function = generate_gaussian_obs_model(obs_error; n = length(initial_condition)), prior = generate_weak_prior(size(m_transition, 1)), t0_index::Int64 = 0)
+function generate_custom_model(model_name::String, rate_function::Function, initial_condition::Array{Int64, 1}, m_transition::Array{Int64,2}; obs_function::Function = dmy_obs_fn, obs_error = 2.0, obs_model::Function = partial_gaussian_obs_model(obs_error; n = length(initial_condition)), prior = generate_weak_prior(size(m_transition, 1)), t0_index::Int64 = 0)
     return DPOMPModel(model_name, rate_function, initial_condition, m_transition, obs_function, obs_model, prior, t0_index)
 end

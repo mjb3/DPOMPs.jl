@@ -28,3 +28,15 @@ function handle_rej_samples(theta::Array{Float64,3}, ap::Int64 = 0)
     output.cv .= Statistics.cov(transpose(reshape(theta[:,(ap+1):size(theta,2),:], size(theta,1), d)))
     return output
 end
+
+##
+function get_prop_density(cv::Array{Float64,2}, old)
+    ## update proposal density
+    tmp = LinearAlgebra.Hermitian(cv)
+    if LinearAlgebra.isposdef(tmp)
+        return Distributions.MvNormal(Matrix(tmp))
+    else
+        C_DEBUG && println(" warning: particle degeneracy problem\n  covariance matrix: ", cv)
+        return old
+    end
+end

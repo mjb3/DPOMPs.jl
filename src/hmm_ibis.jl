@@ -23,7 +23,6 @@ end
 function run_pibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_crit::Float64, ind_prop::Bool, alpha::Float64, np::Int64; n_props = 1)
     ##, rej_sample = size(theta, 2)
     outer_p = size(theta, 2)
-    println("Running: ", outer_p, "-particle SMC^2 analysis (model: ", model.model_name, ")")
     start_time = time_ns()
 
     ess_crit = ess_rs_crit * outer_p
@@ -73,17 +72,14 @@ function run_pibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_cr
             bme[1] += lml
             w .*= gx
             compute_is_mu_covar!(mu, cv, theta, w)
-            ## resample and mutate if criteria satisfied:
+            ## resample and mutate if criteria satisfied: - NEED TO ADD OBSERVATION TYPE CHECK HERE *************************
             if compute_ess(w) < ess_crit
                 C_DEBUG && println(" resampling for ", obs_i)
                 ## update proposal density
-                # propd = Distributions.MvNormal(cv)
                 propd = get_prop_density(cv, propd)
                 ## resample and swap
                 nidx = rs_systematic(w)
-                # pcnt = zeros(outer_p)   # abstract this ***
                 for p in eachindex(pop)
-                    # pcnt[nidx[p]] += 1  # vectorise this ***
                     theta2[:, p] .= theta[:, nidx[p]]
                     aw2[p] = aw[nidx[p]]
                     pop2[p] .= pop[nidx[p]]
@@ -104,19 +100,16 @@ function run_pibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_cr
                         if prtf != -Inf
                             pop_f = zeros(Int64, np, pop_size)
                             ## sample using pmcmc kernel
-                            # - RETRIEVE MOST RECENT MARGINAL
-                            if obs_i == 1
-                                # - compute ml for obsi
+                            if obs_i == 1   # - compute ml for obsi
                                 gx_f = partial_log_likelihood!(pop_f, model, theta_f, fn_rs, ess_rs_crit, obs_i, obs_i)
                                 aw_f = gx_f
-                            else
+                            else            # (RETRIEVE MOST RECENT MARGINAL)
                                 # - compute aw up to obsi-1
                                 aw_f = partial_log_likelihood!(pop_f, model, theta_f, fn_rs, ess_rs_crit, 1, obs_i - 1)
                                 # - compute ml for obsi
                                 gx_f = partial_log_likelihood!(pop_f, model, theta_f, fn_rs, ess_rs_crit, obs_i, obs_i)
                                 aw_f += gx_f
                             end
-                            # aw_f = prtf + partial_log_likelihood!(pop_f, model, theta_f, fn_rs, ess_rs_crit, 1, obs_i)
                             aw_f += prtf
                             ## accept with p(mh)
                             if exp(aw_f - aw[p]) > rand()
@@ -127,7 +120,6 @@ function run_pibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_cr
                                 k_log[2] += 1
                                 tj *= alpha
                             else
-                                # mtd_gx[p] = mtd_gx[p]
                                 tj *= 0.999
                             end
                         end
@@ -135,8 +127,7 @@ function run_pibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_cr
                 end
                 ## RB ML update
                 bme[2] += log(mlr / Statistics.mean(mtd_gx))
-                ## reset w = 1
-                w .= 1
+                w .= 1  ## reset w = 1
             else
                 ## standard ML update
                 bme[2] += log(sum(w .* gx) / sum(w))
@@ -149,22 +140,11 @@ function run_pibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_cr
     C_DEBUG && println(" mcv: ", mu, cv)
     bme .*= -2
     output = ImportanceSample(mu, cv, theta, w, time_ns() - start_time, bme)
-    println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s. AR = ", round(100.0 * k_log[2] / k_log[1]; sigdigits = 3), "%")
+    println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s (AR = ", round(100.0 * k_log[2] / k_log[1]; sigdigits = 3), "%)")
     return output
 end
 
-##
-function get_prop_density(cv::Array{Float64,2}, old)
-    ## update proposal density
-    tmp = LinearAlgebra.Hermitian(cv)
-    if LinearAlgebra.isposdef(tmp)
-        return Distributions.MvNormal(Matrix(tmp))
-    else
-        println("warning: particle degeneracy problem")
-        println(" covariance matrix: ", cv)
-        return old
-    end
-end
+
 
 ## MBP IBIS algorithm
 function run_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_crit, n_props, ind_prop, alpha)
@@ -269,7 +249,7 @@ function run_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs
 
     ##
     output = ImportanceSample(mu, cv, theta, w, time_ns() - start_time, bme)
-    println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s. AR = ", round(100.0 * k_log[2] / k_log[1]; sigdigits = 3), "%")
+    println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s (AR := ", round(100.0 * k_log[2] / k_log[1]; sigdigits = 3), "%)")
     return output
 end
 
@@ -324,7 +304,6 @@ function run_dfg_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, es
             compute_is_mu_covar!(mu, cv, theta, w)
             ## resample and mutate if criteria satisfied:
             essv = compute_ess(w)
-            # t = model.obs_data[obs_i].time
             if (essv < ess_crit)
                 ## resample and swap
                 propd = get_prop_density(cv, propd)

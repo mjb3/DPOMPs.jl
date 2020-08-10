@@ -34,22 +34,32 @@ const MAX_TRAJ = 196000
 const C_PR_SIGDIG = 3
 const C_DF_MCMC_STEPS = 50000
 const C_DF_MCMC_ADAPT = 0.2
+const C_MCMC_ADAPT_INTERVALS = 10
+const C_ACCEPTANCE_ALPHA = 1.002
+const C_DF_MBPI_P = 4000
+const C_DF_SMC2_P = 2000
+const C_DF_PF_P = 200
 const C_DF_ESS_CRIT = 0.3
+const C_DF_MBPI_ESS_CRIT = 0.5
+const C_DF_MBPI_MUT = 3
 const C_DEBUG = false
 const C_RT_UNITS = 1000000000
+const C_ALG_NM_SMC2 = "SMC2"
+const C_ALG_NM_MBPI = "MBPI"
+
 
 df_adapt_period(steps::Int64) = Int64(floor(steps * C_DF_MCMC_ADAPT))
 
 ### public stuffs ###
 export DPOMPModel, Particle, Event, Observation
-export SimResults, ImportanceSample, RejectionSample, MCMCSample, ARQMCMCSample
-export generate_model, generate_custom_model
-export gillespie_sim, run_mcmc_analysis, run_mbp_ibis_analysis, run_smc2_analysis, run_arq_mcmc_analysis
-export plot_trajectory, plot_parameter_trace, plot_parameter_marginal, plot_parameter_heatmap
+export SimResults, ImportanceSample, RejectionSample, MCMCSample, ARQMCMCSample, ModelComparisonResults
+export generate_model, generate_custom_model, partial_gaussian_obs_model
+export gillespie_sim, run_mcmc_analysis, run_mbp_ibis_analysis, run_smc2_analysis, run_arq_mcmc_analysis, run_model_comparison_analysis
+export plot_trajectory, plot_parameter_trace, plot_parameter_marginal, plot_parameter_heatmap, plot_model_evidence
 export get_observations, tabulate_results, print_results
 export run_custom_mcmc_analysis, generate_custom_particle
 
-#### DCTMPs ####
+#### DSS-POMPs ####
 
 ## types ###
 include("hmm_structs.jl")
@@ -70,6 +80,8 @@ include("hmm_pf_resample.jl")
 include("hmm_particle_filter.jl")
 ## IBIS sampling
 include("hmm_ibis.jl")
+## model comparison
+include("hmm_mcomp.jl")
 ## predefined models ###
 include("hmm_examples.jl")
 ## utils (e.g. printing to file) ###
@@ -153,7 +165,7 @@ tabulate_results(results)                   # optionally, show the results
 ```
 
 """
-function run_mcmc_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; n_chains::Int64 = 3, initial_parameters = rand(model.prior, n_chains), steps::Int64 = C_DF_MCMC_STEPS, adapt_period::Int64 = Int64(floor(steps * C_DF_MCMC_ADAPT)), fin_adapt::Bool = false, mbp::Bool = true, ppp::Float64 = 0.3, mvp::Int64 = 2)
+function run_mcmc_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; n_chains::Int64 = 3, initial_parameters = rand(model.prior, n_chains), steps::Int64 = C_DF_MCMC_STEPS, adapt_period::Int64 = Int64(floor(steps * C_DF_MCMC_ADAPT)), fin_adapt::Bool = false, mbp::Bool = true, ppp::Float64 = 0.3, mvp::Int64 = 3)
     mdl = get_private_model(model, obs_data)
     if mbp
         return run_mbp_mcmc(mdl, initial_parameters, steps, adapt_period, fin_adapt)
@@ -187,7 +199,7 @@ tabulate_results(results)                # show the results
 ```
 
 """
-function run_mbp_ibis_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; np = 4000, ess_rs_crit = C_DF_ESS_CRIT, n_props = 3, ind_prop = false, alpha = 1.002)
+function run_mbp_ibis_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; np = C_DF_MBPI_P, ess_rs_crit = C_DF_MBP_ESS_CRIT, n_props = C_DF_MBP_MUT, ind_prop = false, alpha = C_ACCEPTANCE_ALPHA)
     mdl = get_private_model(model, obs_data)
     theta_init = rand(mdl.prior, np)
     # (model::HiddenMarkovModel, theta_init::Array{Float64, 2}, ess_rs_crit = C_DF_ESS_CRIT; n_props = 3, ind_prop = false, alpha = 1.002)
@@ -219,10 +231,11 @@ tabulate_results(results)               # show the results
 ```
 
 """
-function run_smc2_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; np = 2000, npf = 200, ess_rs_crit = C_DF_ESS_CRIT, ind_prop = true, alpha = 1.002)
+function run_smc2_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; np = C_DF_SMC2_P, npf = C_DF_PF_P, ess_rs_crit = C_DF_ESS_CRIT, ind_prop = true, alpha = C_ACCEPTANCE_ALPHA)
     mdl = get_private_model(model, obs_data)
     theta_init = rand(mdl.prior, np)
     # run_pibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_crit::Float64, ind_prop::Bool, alpha::Float64, np::Int64
+    println("Running: ", outer_p, "-particle SMC^2 analysis (model: ", model.model_name, ")")
     return run_pibis(mdl, theta_init, ess_rs_crit, ind_prop, alpha, npf)
 end
 

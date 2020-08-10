@@ -219,17 +219,16 @@ function compute_sigma(cv::Array{Float64,2})
 end
 
 ## results summary
-# TO BE ADDED: ImportanceSample **********
+#- `proposals`   -- display proposal analysis (MCMC only).
 """
     tabulate_results
 
 **Parameters**
 - `results`     -- a data structure of type `MCMCSample`, `ImportanceSample` or `ARQMCMCSample`.
-- `proposals`   -- display proposal analysis (MCMC only).
 
 Display the results of an inference analysis.
 """
-function tabulate_results(results::MCMCSample, proposals = false)
+function tabulate_results(results::MCMCSample)
     ## proposals
     # proposals && tabulate_proposals(results)
     ## samples
@@ -257,15 +256,12 @@ function tabulate_results(results::ImportanceSample)
     d[:,3] .= round.(sd; sigdigits = C_PR_SIGDIG)
     d[:,4] .= 0
     bme_seq = C_DEBUG ? (1:2) : (1:1)
-    d[bme_seq, 4] = round.(results.bme[bme_seq]; sigdigits = C_PR_SIGDIG)
+    d[bme_seq, 4] = round.(results.bme[bme_seq]; digits = 1)
     PrettyTables.pretty_table(d, h)
 end
 
 ## arq mcmc analysis:
-# ADD f(x)
-function tabulate_results(results::ARQMCMCSample, proposals = false)
-    ## samples
-    # println("ARQ MCMC results:")
+function tabulate_results(results::ARQMCMCSample)
     h = ["θ", "Iμ", "Iσ", "Rμ", "Rσ", "SRE", "SRE975", "BME"]
     d = Matrix(undef, length(results.imp_sample.mu), 8)
     is_sd = compute_sigma(results.imp_sample.cv)
@@ -278,7 +274,7 @@ function tabulate_results(results::ARQMCMCSample, proposals = false)
     d[:,6] .= round.(results.sre[:,2]; sigdigits = C_PR_SIGDIG)
     d[:,7] .= round.(results.sre[:,3]; sigdigits = C_PR_SIGDIG)
     d[:,8] .= 0
-    d[1,8] = round(results.imp_sample.bme[1]; sigdigits = C_PR_SIGDIG)
+    d[1,8] = round(results.imp_sample.bme[1]; digits = 1)
     PrettyTables.pretty_table(d, h)
 end
 
@@ -291,4 +287,14 @@ function resample_is(sample::ImportanceSample; n = 10000)
         resamples[:,i,1] .= sample.theta[:,rsi[i]]
     end
     return RejectionSample(resamples, sample.mu, sample.cv)
+end
+
+## model evidence comparison
+function tabulate_results(results::ModelComparisonResults)
+    h = ["Model", "BME μ", "BME σ"]
+    d = Matrix(undef, length(results.mu), 3)
+    d[:,1] .= results.names
+    d[:,2] .= round.(results.mu; digits = 1)
+    d[:,3] .= round.(results.sigma; sigdigits = C_PR_SIGDIG)
+    PrettyTables.pretty_table(d, h)
 end

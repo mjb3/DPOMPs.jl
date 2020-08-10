@@ -33,6 +33,7 @@ ARQMCMCSample
 ```@docs
 generate_model
 generate_custom_model
+partial_gaussian_obs_model
 ```
 
 ### Simulation
@@ -40,13 +41,20 @@ generate_custom_model
 gillespie_sim
 ```
 
-### Inference
+### Bayesian parameter inference
 
 ```@docs
 run_mcmc_analysis
 run_mbp_ibis_analysis
 run_smc2_analysis
 run_arq_mcmc_analysis
+run_model_comparison_analysis
+```
+
+### Bayesian_model_analysis
+
+```@docs
+run_model_comparison_analysis
 ```
 
 ### Utilities
@@ -63,6 +71,7 @@ plot_trajectory
 plot_parameter_trace
 plot_parameter_marginal
 plot_parameter_heatmap
+plot_model_evidence
 ```
 
 ### Advanced features.

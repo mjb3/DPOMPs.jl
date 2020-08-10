@@ -221,3 +221,26 @@ struct ARQMCMCSample
     sre::Array{Float64,2}
     run_time::UInt64 # redundant
 end
+
+"""
+    ModelComparisonResults
+
+The results of a model comparison, based on the Bayesian model evidence (BME.)
+
+**Fields**
+- `names`       -- model names.
+- `bme`         -- matrix of BME estimates.
+- `mu`          -- vector of BME estimate means (by model.)
+- `sigma`       -- vector of BME estimate standard deviations.
+- `n_runs`      -- number of independent analyses for each model.
+- `run_time`    -- total application run time.
+
+"""
+struct ModelComparisonResults
+    names::Array{String, 1}
+    bme::Array{Float64,2}
+    mu::Array{Float64,1}
+    sigma::Array{Float64,1}
+    n_runs::Int64
+    run_time::UInt64
+end

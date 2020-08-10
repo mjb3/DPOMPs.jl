@@ -10,7 +10,7 @@ const C_INITIAL = 0.1                    # proposal scalar
 macro initialise_mcmc()
     esc(quote
     steps::Int64 = size(theta, 2) #GET RID
-    ADAPT_INTERVAL = adapt_period / 10   # interval between adaptation steps
+    ADAPT_INTERVAL = adapt_period / C_MCMC_ADAPT_INTERVALS   # interval between adaptation steps
     xi = x0
     ## covar matrix
     covar = zeros(length(xi.theta), length(xi.theta))
@@ -18,8 +18,10 @@ macro initialise_mcmc()
         covar[i,i] = xi.theta[i] == 0.0 ? 1 : (xi.theta[i]^2)
     end
     propd = Distributions.MvNormal(covar)
-    c = C_INITIAL
-    theta[:,1,mc] .= xi.theta               # samples
+    c = C_INITIAL                           # autotune
+    theta[:,1,mc] .= xi.theta               # initial sample
+    a_cnt = zeros(Int64, 2)
+    a_cnt[1] = 1
     end)
 end
 
@@ -27,13 +29,14 @@ end
 macro mcmc_adapt_period()
     esc(quote
     if i % ADAPT_INTERVAL == 0
+        # i == ADAPT_INTERVAL && println("first adapt:", i)
         covar = Distributions.cov(transpose(theta[:,1:i,mc]))
-        if sum(covar) == 0
-            println("warning: low acceptance rate detected in adaptation period")
-        else
-            # C_DEBUG && println(" cv := ", transpose(theta[:,1:i,mc]))
-            propd = Distributions.MvNormal(covar)
-        end
+        propd = get_prop_density(covar, propd)
+        # if sum(covar) == 0
+        #     println("warning: low acceptance rate detected in adaptation period")
+        # else
+        #     propd = Distributions.MvNormal(covar)
+        # end
     end
     end)
 end
@@ -57,6 +60,17 @@ macro gibbs_adapt()
         pp && (c *= (accepted ? 1.002 : 0.999))
         @mcmc_adapt_period      # end of adaption period
     end
+    end)
+end
+
+## acceptance handling (also used by GS)
+macro mcmc_handle_mh_step()
+    esc(quote
+    if accepted
+        xi = xf
+        a_cnt[i > adapt_period ? 2 : 1] += 1
+    end
+    theta[:,i,mc] .= xi.theta
     end)
 end
 
@@ -105,39 +119,41 @@ function met_hastings_alg!(theta::Array{Float64,3}, mc::Int64, model::HiddenMark
             mh_prob::Float64 = exp(sum(xf.log_like[1:2]) - sum(xi.log_like[1:2]))
             accepted = (mh_prob > 1 || mh_prob > rand())
         end
-        accepted && (xi = xf)
-        theta[:,i,mc] .= xi.theta
-        ## adaptation
-        @met_hastings_adapt
+        @mcmc_handle_mh_step    # handle accepted proposals
+        # accepted && (xi = xf)
+        # theta[:,i,mc] .= xi.theta
+        @met_hastings_adapt     # adaptation
     end ## end of MCMC loop
     C_DEBUG && print(" - Xn := ", length(xi.trajectory), " events; ll := ", xi.log_like, " - ")
+    return a_cnt
 end
 
 ## Single particle adaptive Gibbs sampler - TO BE FINISHED ****
-function gibbs_mh_alg!(theta::Array{Float64,3}, mc::Int64, model::HiddenMarkovModel, adapt_period::Int64, x0::Particle, proposal_alg::Function, fin_adapt::Bool, ppp::Float64)
+function gibbs_mh_alg!(theta::Array{Float64,3}, mc::Int64, model::HiddenMarkovModel, adapt_period::Int64, x0::Particle, proposal_alg::Function, fin_adapt::Bool, ppp::Float64, adapt_prop_alg::Function)
     @initialise_mcmc
+    prop_fn = adapt_prop_alg
     for i in 2:steps            # Gibbs
         pp = rand() < ppp
         if pp                   # parameter proposal
             theta_f = get_mv_param(propd, c, theta[:,i-1,mc])
             xf = Particle(theta_f, xi.initial_condition, xi.final_condition, xi.trajectory, [Distributions.logpdf(model.prior, theta_f), 0.0, 0.0])
         else                    # trajectory proposal
-            xf = proposal_alg(xi)
+            xf = prop_fn(xi)
         end
         sum(xf.log_like) == -Inf || compute_full_log_like!(model, xf)
-        if xf.log_like[2] == -Inf
+        if sum(xf.log_like) == -Inf
             accepted = false    # reject automatically
         else                    # accept or reject
             # NB: [3] == proposal log like
             mh_prob::Float64 = exp(sum(xf.log_like[1:3]) - sum(xi.log_like[1:2]))
             accepted = (mh_prob > 1 || mh_prob > rand())
         end
-        accepted && (xi = xf)
-        theta[:,i,mc] .= xi.theta
-        ## adaptation
-        @gibbs_adapt
+        @mcmc_handle_mh_step    # handle accepted proposals
+        @gibbs_adapt            # adaptation
+        i == Int64(floor(adapt_period * 0.2)) && (prop_fn = proposal_alg)
     end ## end of MCMC loop
     C_DEBUG && print(" - Xn := ", length(xi.trajectory), " events; ll := ", xi.log_like, " - ")
+    return a_cnt
 end
 
 ## generic met hastings
@@ -274,21 +290,6 @@ macro mcmc_tidy_up()
     end)
 end
 
-# macro mcmc_gibbs_run()
-#     esc(quote
-#     start_time = time_ns()
-#     samples = sample_space(theta_init, steps)
-#     for i in 1:size(theta_init,2)
-#         x0 = generate_x0(model, theta_init[:,i])    # simulate initial particle
-#         compute_full_log_like!(model, x0)           # NB. sim initialises with OM ll only
-#         ## run inference
-#         C_DEBUG && print( " mc", i, " initialising for x0 := ", x0.theta, " (", length(x0.trajectory), " events)")
-#         gibbs_mh_alg!(samples, i, model, adapt_period, x0, trajectory_prop, fin_adapt, ppp)
-#         println(" chain ", i, " complete.")
-#     end
-#     end)
-# end
-
 ## ADD GENERIC GIBBS RUN FN
 
 ## Std MCMC, i.e. gelman diagnostic
@@ -299,15 +300,17 @@ function run_std_mcmc(model::HiddenMarkovModel, theta_init::Array{Float64,2}, st
         return x0
     end
     trajectory_prop =  get_std_mcmc_proposal_fn(model, mvp)
+    adapt_tp = get_std_mcmc_proposal_fn(model, 2)
     println("Running: ", size(theta_init, 2) ,"-chain ", steps, "-sample ", fin_adapt ? "finite-" : "", "adaptive DA-MCMC analysis (model: ", model.model_name, ")")
     start_time = time_ns()
     samples = sample_space(theta_init, steps)
     for i in 1:size(theta_init,2)
+        print(" initialising chain ", i)
         x0 = x0_prop(theta_init[:,i])
         ## run inference
-        C_DEBUG && print( " mc", i, " initialising for x0 := ", x0.theta, " (", length(x0.trajectory), " events)")
-        gibbs_mh_alg!(samples, i, model, adapt_period, x0, trajectory_prop, fin_adapt, ppp)
-        println(" chain ", i, " complete.")
+        C_DEBUG && print(" with x0 := ", x0.theta, " (", length(x0.trajectory), " events)")
+        a_cnt = gibbs_mh_alg!(samples, i, model, adapt_period, x0, trajectory_prop, fin_adapt, ppp, adapt_tp)
+        println(" - complete (AAR := ", round(100 * a_cnt[2] / (steps - adapt_period), digits = 1), "%)")
     end
     @mcmc_tidy_up
     return output
@@ -319,11 +322,12 @@ function run_custom_gibbs_mcmc(model::HiddenMarkovModel, theta_init::Array{Float
     start_time = time_ns()
     samples = sample_space(theta_init, steps)
     for i in 1:size(theta_init,2)
+        print(" initialising chain ", i)
         x0 = x0_prop(theta_init[:,i])    # generate initial particle
         ## run inference
-        C_DEBUG && print( " mc", i, " initialising for x0 := ", x0.theta, " (", length(x0.trajectory), " events)")
-        gibbs_mh_alg!(samples, i, model, adapt_period, x0, trajectory_prop, fin_adapt, ppp)
-        println(" chain ", i, " complete.")
+        C_DEBUG && print(" with x0 := ", x0.theta, " (", length(x0.trajectory), " events)")
+        gibbs_mh_alg!(samples, i, model, adapt_period, x0, trajectory_prop, fin_adapt, ppp, trajectory_prop)
+        println(" - complete (AAR := ", round(100 * a_cnt[2] / (steps - adapt_period), digits = 1), "%)")
     end
     @mcmc_tidy_up
     return output
@@ -392,11 +396,12 @@ function run_mbp_mcmc(model::HiddenMarkovModel, theta_init::Array{Float64,2}, st
     samples = sample_space(theta_init, steps)
     println("Running: ", size(theta_init, 2) ,"-chain ", steps, "-sample ", fin_adapt ? "finite-" : "", "adaptive MBP-MCMC analysis (model: ", model.model_name, ")")
     for i in 1:size(theta_init,2)
+        print(" initialising chain ", i)
         x0 = generate_x0(model, theta_init[:,i])    # simulate initial particle
         ## run inference
-        C_DEBUG && print( " mc", i, " initialising for x0 := ", x0.theta, " (", length(x0.trajectory), " events)")
-        met_hastings_alg!(samples, i, model, adapt_period, x0, model_based_proposal, fin_adapt)
-        println(" chain ", i, " complete.")
+        C_DEBUG && print( " with x0 := ", x0.theta, " (", length(x0.trajectory), " events)")
+        a_cnt = met_hastings_alg!(samples, i, model, adapt_period, x0, model_based_proposal, fin_adapt)
+        println(" - complete (AAR := ", round(100 * a_cnt[2] / (steps - adapt_period), digits = 1), "%)")
     end
     @mcmc_tidy_up
     return output

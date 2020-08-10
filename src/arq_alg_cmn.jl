@@ -33,31 +33,24 @@ function get_theta_f(theta_i::Array{Int64, 1}, j_w::StatsBase.ProbabilityWeights
 end
 
 ## inner alg constants:
-# MOVE THESE TO MACRO?
-const Q_JUMP = 0.1            # initial = Q_JUMP * grid res * NP
+const Q_JUMP = 0.1              # initial = Q_JUMP * grid res * NP
 const Q_J_MIN = 2
-## NB. add min/max intervals?
-const N_ADAPT_PERIODS = 100    # adaptive mh mcmc (parameterise?)
+const N_ADAPT_PERIODS = 100     # adaptive mh mcmc (parameterise?)
 
-## does what it says on the tin
+## adapts jump weights
 function adapt_jw!(j_w::StatsBase.ProbabilityWeights, lar_j::Int64, j::Int64, mc_accepted::BitArray{1}, a_h::Int64, i::Int64, tgt_ar::Float64, mc_idx::Array{Int64,2})
-    # println("j1: ", j)
     if (j == Q_J_MIN && sum(mc_accepted[(i + 1 - a_h):i]) == 0)
-        print(" *LAR*")
+        C_DEBUG && print(" *LAR*")
         j = lar_j
     else
         # adjust max jump size based on acceptance rate
         j += ((sum(mc_accepted[(i + 1 - a_h):i]) / a_h) > tgt_ar ? 1 : -1)
         j = max(j, Q_J_MIN)
     end
-    # if i % (2 * a_h) == 0 # EVERY OTHER INTERVAL
     ## tune var
-    # sd = Statistics.std(mc_idx[:, 1:i], dims = 1)[1,:]
     sd = Statistics.std(mc_idx[:, 1:i], dims = 2)[:,1]
-    # adjust for zeros
-    if sum(sd) == 0.0
-        # println("WARNING: acceptance rate is 0")
-        print(" *ZAR*")
+    if sum(sd) == 0.0       # adjust for zeros
+        C_DEBUG && print(" *ZAR*")
         sd .= 1.0
     else
         msd = minimum(sd[sd .> 0.0])
@@ -65,8 +58,7 @@ function adapt_jw!(j_w::StatsBase.ProbabilityWeights, lar_j::Int64, j::Int64, mc
             sd[s] == 0.0 && (sd[s] = msd)
         end
     end
-    ## update weights and return j
-    j_w .= sd
+    j_w .= sd               # update weights and return j
     return j
 end
 
@@ -101,7 +93,6 @@ macro init_inner_mcmc()
       # DEBUG (TO BE REMOVED):
       mcf = Array{Float64, 2}(undef, length(theta_i), steps)
       ## theta index (i.e. grid key)
-      # theta_i = theta_init
       ## first sample
       mc_idx[:,1] .= theta_i
       mc_accepted[1] = true

@@ -93,13 +93,15 @@ end
 
 function plot_parameter_marginal(sample::ARQMCMCSample, parameter::Int64; nbins = sample.sample_resolution, use_is::Bool = false)
     use_is && (return plot_parameter_marginal(sample.imp_sample, parameter))
+    sample.samples.sample.theta[:,1,1] .= sample.grid_range[:,1]        # HACK
+    sample.samples.sample.theta[:,end,end] .= sample.grid_range[:,2]
     p = plot_parameter_marginal(sample.samples, parameter, sample.adapt_period, nbins)
+    return p
     # x = sample.samples.theta[parameter, (sample.adapt_period+1):size(sample.samples.theta, 2), :]
     # x = reshape(x, length(x))
     # p = UnicodePlots.histogram(x, nbins = sample.sample_resolution)#, colorbar_lim = sample.grid_range[parameter,:]
     # UnicodePlots.ylabel!(p, string("θ", Char(8320 + parameter)))
     # UnicodePlots.xlabel!(p, "samples")
-    return p
 end
 
 
@@ -140,4 +142,23 @@ function plot_parameter_heatmap(sample::ARQMCMCSample, x_parameter::Int64, y_par
     p = plot_parameter_heatmap(sample.samples, x_parameter, y_parameter, sample.adapt_period)
     # UnicodePlots.xaxis!(p, sample.grid_range[x_parameter,:])
     return p
+end
+
+## model evidence comparison
+"""
+    plot_model_evidence(results; boxplot = true)
+
+Plot the Bayesian model evidence (BME) from a model comparison analysis, using [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl).
+
+**Parameters**
+- `results`   -- `ModelComparisonResults`, i.e. from a call to `run_model_comparison_analysis`.
+- `boxplot`   -- `true` (default) for a series of boxplots, else a simple UnicodePlots.barplot showing only the average BME for each model variant.
+
+"""
+function plot_model_evidence(results::ModelComparisonResults, boxplot = true)
+    if boxplot
+        return UnicodePlots.boxplot(results.names, [results.bme[:, i] for i in 1:size(results.bme,2)], title = "Model evidence", xlabel = "BME")
+    else
+        return UnicodePlots.barplot(results.names, round.(results.mu; digits = 1), title = "Model evidence")
+    end
 end

@@ -10,19 +10,16 @@ function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, b
     samples = zeros(n_theta, steps, chains)
     ## initialise importance sample
     grid = Dict() # {Array{Int64, 1}, GridPoint}
-    # is_mu = zeros(n_theta)
     is_uc = 0.0
     ## run N chains
     for i in 1:chains
-        ## retain_samples or clear IS
-        # retain_samples || (grid = Dict())
+        print(" initialising chain ", i)
         ## choose initial theta coords
         theta_init = rand(1:mdl.sample_resolution, n_theta)
-        print(" initialising chain ", i, ": θ ~ ", round.(get_theta_val(mdl, theta_init, 0.0); sigdigits = C_PR_SIGDIG + 1))
+        C_DEBUG && print(": θ ~ ", round.(get_theta_val(mdl, theta_init, 0.0); sigdigits = C_PR_SIGDIG + 1))
         ## run inner MCMC using designated function
-        # mcmc[i] = mcmc_fn(samples, i, grid, mdl, steps, burnin, theta_init, tgt_ar)
         mcmc = arq_met_hastings!(samples, i, grid, mdl, steps, burnin, theta_init, tgt_ar)
-        println("- complete (calls to f(θ) := ", mcmc[1], "; AAR := ", round(mcmc[3] * 100, digits = 1), "%)")
+        println(" - complete (calls to f(θ) := ", mcmc[1], "; AAR := ", round(mcmc[3] * 100, digits = 1), "%)")
     end
     ## compute scale reduction factor est.
     rejs = handle_rej_samples(samples, burnin)      # shared HMM functions
