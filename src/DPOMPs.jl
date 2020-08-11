@@ -94,7 +94,9 @@ include("hmm_visuals_uc.jl")
 """
     gillespie_sim(model, parameters; tmax = 100.0, num_obs = 5)
 
-Run a Doob-Gillespie simulation on `model`. Returns a SimResults type containing the trajectory and observations data, or an array of the same if `n_sims` > 1.
+Run a Doob-Gillespie (DGA) simulation based on `model`.
+
+Returns a SimResults type containing the trajectory and observations data, or an array of the same if `n_sims` > 1.
 
 **Parameters**
 - `model`       -- `DPOMPModel` (see [DCTMPs.jl models]@ref).
@@ -133,21 +135,20 @@ function gillespie_sim(model::DPOMPModel, parameters::Array{Float64, 1}; tmax::F
     end
 end
 
+# Otherwise the results of a single-chain analysis are returned, which include the Geweke test statistics computed for that analysis.
 """
     run_mcmc_analysis(model, obs_data; ... )
 
-Run an `n_chains`-MCMC analysis. The `initial_parameters` are sampled from the prior distribution unless otherwise specified by the user.
+Run an `n_chains`-MCMC analysis using the designated algorithm (*MBP-MCMC* by default.)
 
-A Gelman-Rubin convergence diagnostic is automatically carried out for n_chains > 1 and included in the [multi-chain] analysis results.
-
-Otherwise the results of a single-chain analysis are returned, which include the Geweke test statistics computed for that analysis.
+The `initial_parameters` are sampled from the prior distribution unless otherwise specified by the user. A Gelman-Rubin convergence diagnostic is automatically carried out (for n_chains > 1) and included in the [multi-chain] analysis results.
 
 **Parameters**
 - `model`               -- `DPOMPModel` (see [DCTMPs.jl models]@ref).
 - `obs_data`            -- `Observations` data.
 
 **Optional**
-- `n_chains`            -- number of Markov chains (optional, default: 3.)
+- `n_chains`            -- number of Markov chains (default: 3.)
 - `initial_parameters`  -- 2d array of initial model parameters. Each column vector correspondes to a single model parameter.
 - `steps`               -- number of iterations.
 - `adapt_period`        -- number of discarded samples.
@@ -178,7 +179,7 @@ end
 """
     run_mbp_ibis_analysis(model, obs_data; ... )
 
-Run an MBP IBIS analysis based on `model` and `obs_data` of type `Observations`.
+Run an *MBP-IBIS* analysis based on `model`, and `obs_data` of type `Observations`.
 
 **Parameters**
 - `model`               -- `DPOMPModel` (see [DCTMPs.jl models]@ref).
@@ -210,7 +211,7 @@ end
 """
     run_smc2_analysis(model, obs_data; ... )
 
-Run an SMC^2 (i.e. particle filter IBIS) analysis based on `model` and `obs_data` of type `Observations`.
+Run an *SMC^2* (i.e. particle filter IBIS) analysis based on `model` and `obs_data` of type `Observations`.
 
 **Parameters**
 - `model`               -- `DPOMPModel` (see [DCTMPs.jl models]@ref).

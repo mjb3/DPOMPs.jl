@@ -32,11 +32,12 @@ end
 """
     plot_parameter_trace(mcmc, parameter)
 
+Trace plot of samples from `n` MCMC analyses for a given model `parameter` using [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl).
+
 **Parameters**
 - `sample`      -- `MCMCSample`, `ARQMCMCSample` or `RejectionSample` e.g. from a call to `ADD XREF`.
 - `parameter`   -- the index of the model parameter to be plotted.
 
-Trace plot of samples from `n` MCMC analyses for a given model `parameter` using [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl).
 """
 function plot_parameter_trace(sample::RejectionSample, parameter::Int64)
     x = 1:size(sample.theta, 2)
@@ -109,12 +110,13 @@ end
 """
     plot_parameter_heatmap(mcmc, x_parameter, y_parameter)
 
+Plot the marginal distribution of samples from an MCMC analysis for two model parameters using [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl).
+
 **Parameters**
 - `mcmc`        -- `MCMCResults`, e.g. from a call to `run_met_hastings_mcmc`.
 - `x_parameter`   -- the index of the model parameter to be plotted on the x axis.
 - `y_parameter`   -- the index of the model parameter to be plotted on the y axis.
 
-Plot the marginal distribution of samples from an MCMC analysis for two model parameters using [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl).
 """
 function plot_parameter_heatmap(sample::RejectionSample, x_parameter::Int64, y_parameter::Int64, adapt_period::Int64)
     x = vec(sample.theta[x_parameter, (adapt_period+1):size(sample.theta,2), :])
@@ -156,9 +158,14 @@ Plot the Bayesian model evidence (BME) from a model comparison analysis, using [
 
 """
 function plot_model_evidence(results::ModelComparisonResults, boxplot = false)
-    if boxplot
-        return UnicodePlots.boxplot(results.names, [results.bme[:, i] for i in 1:size(results.bme,2)], title = "Model evidence", xlabel = "BME")
-    else
-        return UnicodePlots.barplot(results.names, round.(results.mu; digits = 1), title = "Model evidence")
+    # this is a HACK - need to handle bad results better...
+    try
+        if boxplot
+            return UnicodePlots.boxplot(results.names, [results.bme[:, i] for i in 1:size(results.bme,2)], title = "Model evidence estimates", xlabel = "BME")
+        else
+            return UnicodePlots.barplot(results.names, round.(results.mu; digits = 1), title = "Model evidence")
+        end
+    catch err
+        println("ERROR: couldn't produce plot :=\n", err)
     end
 end

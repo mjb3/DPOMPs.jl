@@ -12,10 +12,9 @@
 """
     get_observations(source)
 
-**Parameters**
-- `source`      -- `DataFrame` or filepath (i.e. `String`) containing the data (with times in the first column).
+Return an array of type `Observation`, based on a two-dimensional array, `DataFrame` or file location (i.e. `String`.)
 
-Create and return an array of type `Observation` based on a two dimensional array, `DataFrame` or file location.
+Note that a observation times must be in the first column of the input variable.
 """
 function get_observations(df::DataFrames.DataFrame)
     obs = Observation[]

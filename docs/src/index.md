@@ -1,6 +1,6 @@
 # Introduction
 
-**DPOMPs.jl** - *Bayesian parameter inference for Discrete-state-space Partially Observed Markov Processes in Julia.*
+**DPOMPs.jl** - *Bayesian inference for Discrete-state-space Partially Observed Markov Processes in Julia.*
 
 !!! note
 
@@ -16,11 +16,9 @@ A well-known example is the **Kermack-McKendrick susceptible-infectious-suscepti
 
 In applied scientific situations, such systems are often difficult to directly observe, and so they are referred to in context as **Partially Observed**.
 
-Finally, the dynamics (how the system state changes) of the **SIR** and other **DSS** models can be represented in continuous time by [a set of coupled] **Markov Processes**. Specifically, we can define a probability density or likelihood function.
+The dynamics (how the system state changes) of the **SIR**, and other **DSS** models, can be represented in continuous time by [a set of coupled] **Markov Processes**. Specifically, we can define a probability density, or likelihood function, that governs the time-evolution of the system under study.
 
-This is useful outwith the availability of scientific data, because we can construct statistical sampling schemes based on that identity (i.e. the probability density function.) In plain English - it allows us to 'simulate' the model, and thus gain an intuitive understand of those dynamics.
-
-Given some (partially complete) data however, these concepts yield a paradigm for (in this case, Bayesian) statistical inference based on a general class of model:  **Discrete-state-space Partially Observed Markov Processes, or DPOMPs.**
+Furthermore, given some [partially complete] scientific data, the combined concepts yield a paradigm for [in this case, Bayesian] statistical inference based on a general class of model:  **Discrete-state-space Partially Observed Markov Processes, or DPOMPs.**
 
 ## Package features
 

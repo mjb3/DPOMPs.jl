@@ -1,6 +1,8 @@
 ## model comparison
-
-
+# TO DO:
+# - plug ARQ option in
+# - various algorithm options
+# - breakout HMM option
 
 """
     run_model_comparison_analysis(model, obs_data; ... )
@@ -13,17 +15,19 @@ Returns an object of type `ModelComparisonResults`, which includes the mean and 
 - `models`          -- An `Array` of `DPOMPModel`.
 - `obs_data`        -- An array of type `Observation`.
 
-**Optional**
-- `n_runs`          -- number of algorithm runs used to estimate the bme (and variance.)
-- `algorithm`       -- `String` representing the inference method used for the analysis, e.g. "SMC2" for *SMC^2* (default); "MBPI" for *MBP-IBIS*; or "ARQ".
+**Optional parameters**
+- `n_runs`          -- number of independent analyses used to estimate the BME for each model.
+- `algorithm`       -- `String` representing the inference method used for the analysis, `"SMC2"` for **SMC^2** (default); `"MBPI"` for *MBP-IBIS*; or "ARQ".
 
-**Inference algorithm parameters**
+**Optional inference algorithm parameters**
 - `np`              -- number of [outer, i.e. theta] particles used in IBIS procedures (doesn't apply to ARQ-MCMC.)
-- `ess_rs_crit`     -- Effective sampling size (resampling )
+- `ess_rs_crit`     -- Effective sample size (ESS) resampling criteria.
+- `npf`             -- number of particles used in particle filter (doesn't apply to MBP-IBIS.)
+- `n_props`         -- see the docs for `run_mbp_ibis_analysis`.
 
 **Example**
 ```@repl
-# NB. define some models to compare, e.g. as m1, m2, etc
+# NB. first define some models to compare, e.g. as m1, m2, etc
 models = [m1, m2, m3]
 results = run_model_comparison_analysis(models, y; n_runs = 10)
 tabulate_results(results)   # show the results (optional)
