@@ -3,10 +3,9 @@
 """
     plot_trajectory(x)
 
-**Parameters**
-- `x`       -- `SimResults`, i.e. from a call to `gillespie_sim`.
+Plot the trajectory of a a DGA simulation using [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl).
 
-Plot the trajectory of a a DGA simulation on `model` using [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl).
+The only input parameter required is `x` of type `SimResults`, i.e. from a call to `gillespie_sim`.
 """
 function plot_trajectory(x::SimResults)
     ## collect time and population

@@ -147,7 +147,7 @@ end
 
 
 ## MBP IBIS algorithm
-function run_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_crit, n_props, ind_prop, alpha)
+function run_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_crit::Float64, n_props::Int64, ind_prop::Bool, alpha::Float64, msgs::Bool = true)
     outer_p = size(theta,2)
     println("Running: ", outer_p, "-particle MBP-IBIS analysis (model: ", model.model_name, ")")
     C_DEBUG && println(" - {n_props, ind_prop, ess} : = ", (n_props, ind_prop, ess_rs_crit))

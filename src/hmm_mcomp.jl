@@ -1,8 +1,8 @@
 ## model comparison
 # TO DO:
-# - plug ARQ option in
+# - breakout HMM option *************
+# - plug ARQ option in (sep function call)
 # - various algorithm options
-# - breakout HMM option
 
 """
     run_model_comparison_analysis(model, obs_data; ... )
@@ -36,7 +36,7 @@ tabulate_results(results)   # show the results (optional)
 """
 function run_model_comparison_analysis(models::Array{DPOMPModel, 1}, y::Array{Observation, 1}; n_runs = 3, algorithm = C_ALG_NM_SMC2
     , np::Int64 = algorithm == C_ALG_NM_SMC2 ? C_DF_SMC2_P : C_DF_MBPI_P
-    , ess_rs_crit::Float64 = algorithm == C_ALG_NM_SMC2 ? C_DF_ESS_CRIT : C_DF_MBP_ESS_CRIT
+    , ess_rs_crit::Float64 = algorithm == C_ALG_NM_SMC2 ? C_DF_ESS_CRIT : C_DF_MBPI_ESS_CRIT
     , npf::Int64 = C_DF_PF_P, n_props::Int64 = C_DF_MBPI_MUT)
 
     println("Running: ", n_runs, "-run ", length(models), "-model Bayesian evidence analysis (algorithm := ", algorithm, ")\n - please note: this may take a while...")
@@ -47,7 +47,7 @@ function run_model_comparison_analysis(models::Array{DPOMPModel, 1}, y::Array{Ob
     end
     function alg_mibis(mdl::HiddenMarkovModel)
         theta_init = rand(mdl.prior, np)
-        return run_mbp_ibis(mdl, theta_init, ess_rs_crit, n_props, false, C_ACCEPTANCE_ALPHA)
+        return run_mbp_ibis(mdl, theta_init, ess_rs_crit, n_props, false, C_ACCEPTANCE_ALPHA, false)
     end
     # function alg_arq(mdl::HiddenMarkovModel)    # WIP
     #     run_arq_mcmc_analysis(mdl, theta_range::Array{Float64,2}; sample_resolution::Int64 = 30, sample_limit::Int64 = 3, n_chains::Int64 = 5, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), tgt_ar::Float64 = 0.33, np::Int64 = 200, ess_crit = 0.3)

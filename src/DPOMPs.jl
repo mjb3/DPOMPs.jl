@@ -200,7 +200,7 @@ tabulate_results(results)                # show the results
 ```
 
 """
-function run_mbp_ibis_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; np = C_DF_MBPI_P, ess_rs_crit = C_DF_MBP_ESS_CRIT, n_props = C_DF_MBP_MUT, ind_prop = false, alpha = C_ACCEPTANCE_ALPHA)
+function run_mbp_ibis_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; np = C_DF_MBPI_P, ess_rs_crit = C_DF_MBPI_ESS_CRIT, n_props = C_DF_MBPI_MUT, ind_prop = false, alpha = C_ACCEPTANCE_ALPHA)
     mdl = get_private_model(model, obs_data)
     theta_init = rand(mdl.prior, np)
     # (model::HiddenMarkovModel, theta_init::Array{Float64, 2}, ess_rs_crit = C_DF_ESS_CRIT; n_props = 3, ind_prop = false, alpha = 1.002)
@@ -236,7 +236,7 @@ function run_smc2_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; np
     mdl = get_private_model(model, obs_data)
     theta_init = rand(mdl.prior, np)
     # run_pibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_crit::Float64, ind_prop::Bool, alpha::Float64, np::Int64
-    println("Running: ", outer_p, "-particle SMC^2 analysis (model: ", model.model_name, ")")
+    println("Running: ", np, "-particle SMC^2 analysis (model: ", model.model_name, ")")
     return run_pibis(mdl, theta_init, ess_rs_crit, ind_prop, alpha, npf)
 end
 
