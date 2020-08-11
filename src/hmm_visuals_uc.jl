@@ -165,6 +165,7 @@ function plot_model_evidence(results::ModelComparisonResults, boxplot = false)
             return UnicodePlots.barplot(results.names, round.(results.mu; digits = 1), title = "Model evidence")
         end
     catch err
-        println("ERROR: couldn't produce plot :=\n", err)
+        println("ERROR: couldn't produce plot :=\n")
+        return err
     end
 end
