@@ -29,11 +29,10 @@ function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, b
     is_mu = zeros(n_theta)
     cv = zeros(length(is_mu),length(is_mu))
     # shared HMM fn:
-    compute_is_mu_covar!(is_mu, cv, theta_w[1], theta_w[2]) #estimate_model_evidence(Statistics.mean(theta_w[2]))
-    is_output = ImportanceSample(is_mu, cv, theta_w[1], theta_w[2], 0, [estimate_model_evidence(sum(theta_w[2]) / (mdl.sample_resolution ^ length(is_mu)))])
+    compute_is_mu_covar!(is_mu, cv, theta_w[1], theta_w[2])
+    is_output = ImportanceSample(is_mu, cv, theta_w[1], theta_w[2], 0, [sum(theta_w[2]) / (mdl.sample_resolution ^ n_theta), Statistics.mean(theta_w[2])])
     ## return results
     output = ARQMCMCSample(is_output, rejs, burnin, mdl.sample_resolution, mdl.sample_limit, mdl.grid_range, sre, time_ns() - start_time)
-    # output = ARQMCMCResults(da ? C_ALG_DA : C_ALG_STD, time_ns() - start_time, mdl.sample_resolution, mdl.sample_limit, mdl.jitter, steps, burnin, gmn[1], gmn[2], gmn[3], mdl.grid_range, grid, is_mu, estimate_model_evidence(is_uc), gmn[4], gmn[5], gmn[6], samples, mcmc)
     println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s. (Iμ = ", round.(is_output.mu; sigdigits = C_PR_SIGDIG), "; Rμ = ", round.(rejs.mu; sigdigits = C_PR_SIGDIG), "; BME = ", round.(output.imp_sample.bme[1]; sigdigits = C_PR_SIGDIG), ")")
     return output
 end

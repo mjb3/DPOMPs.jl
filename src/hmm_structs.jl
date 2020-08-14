@@ -243,4 +243,5 @@ struct ModelComparisonResults
     sigma::Array{Float64,1}
     n_runs::Int64
     run_time::UInt64
+    theta_mu::Array{Array{Float64,1}, 2}
 end

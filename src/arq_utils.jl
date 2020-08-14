@@ -26,10 +26,10 @@ function compute_autocorrelation(samples::Array{Float64, 2}, mu_var::Array{Float
     return output
 end
 
-## see Pooley 2018
-function estimate_model_evidence(p_y::Float64)
-    return -2 * log(p_y)
-end
+## see Pooley 2018 DIC comparison
+# function model_evidence_ic(p_y::Float64)
+#     return -2 * log(p_y)
+# end
 
 
 ## print autocorrelation

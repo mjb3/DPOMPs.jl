@@ -161,6 +161,20 @@ function generate_model(model_name::String, initial_condition::Array{Int64, 1}; 
         output[3] = parameters[3] * population[1]
     end
 
+    ## rate function
+    # mosquito lifespan ^-1
+    # MOS_DEATH = 0.02
+    function rossmac_rf(output, parameters::Array{Float64, 1}, population::Array{Int64, 1})
+        # mosquito population dynamics (birth; deaths)
+        output[1] = parameters[1] * (population[3] + population[4])
+        output[2] = parameters[1] * population[3]
+        output[3] = parameters[1] * population[4]
+        # disease dynamics (human, mosquito infection; human recovery)
+        output[4] = parameters[2] * (population[1] * population[4] / (population[1] + population[2]))
+        output[5] = parameters[3] * (population[2] * population[3] / (population[3] + population[4]))
+        output[6] = parameters[4] * population[2]
+    end
+
     ### MODEL
     if model_name == "SI"
         rate_fn = freq_dep ? si_rf_fd : si_rf
@@ -187,12 +201,15 @@ function generate_model(model_name::String, initial_condition::Array{Int64, 1}; 
         m_transition = [-1 1 0; 0 -1 1; 1 0 -1]
         obs_model = partial_gaussian_obs_model(obs_error; seq = 3)
     elseif model_name == "LOTKA"
-        # model_name = "PN"
+        model_name = "PN"
         rate_fn = lotka_rf
         m_transition = [0 1; 1 -1; -1 0]
         obs_model = partial_gaussian_obs_model(obs_error)
     elseif model_name == "ROSSMAC"
-
+        model_name = "SIAB"
+        rate_fn = rossmac_rf
+        m_transition = [0 0 1 0; 0 0 -1 0; 0 0 0 -1; -1 1 0 0; 0 0 -1 1; 1 -1 0 0]
+        obs_model = partial_gaussian_obs_model(obs_error)
     else
         println(" - SORRY: model name '", model_name, "' not recognised.")
         return  # handle this better? ***
@@ -216,7 +233,7 @@ Generates an `DPOMPModel` instance. Observation models are generated using the `
 **Optional parameters**
 - `observation_function -- observation function, use this to add 'noise' to simulated observations.
 - `obs_error`           -- average observation error (default = 2.)
-- `observation_model`   -- observation model likelihood function.
+- `obs_model`           -- use this option to manuallu specify the observation model likelihood function.
 - `prior_density`       -- prior density function.
 - `t0_index`            -- index of the parameter that represents the initial time. `0` if fixed at `0.0`.
 

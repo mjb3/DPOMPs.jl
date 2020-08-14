@@ -93,8 +93,8 @@ end
 
 function plot_parameter_marginal(sample::ARQMCMCSample, parameter::Int64; nbins = sample.sample_resolution, use_is::Bool = false)
     use_is && (return plot_parameter_marginal(sample.imp_sample, parameter))
-    sample.samples.sample.theta[:,1,1] .= sample.grid_range[:,1]        # HACK
-    sample.samples.sample.theta[:,end,end] .= sample.grid_range[:,2]
+    sample.samples.theta[:,end,1] .= sample.grid_range[:,1]        # HACK
+    sample.samples.theta[:,end,end] .= (sample.grid_range[:,2] .- C_INF_DELTA)
     p = plot_parameter_marginal(sample.samples, parameter, sample.adapt_period, nbins)
     return p
     # x = sample.samples.theta[parameter, (sample.adapt_period+1):size(sample.samples.theta, 2), :]
@@ -166,6 +166,6 @@ function plot_model_evidence(results::ModelComparisonResults, boxplot = false)
         end
     catch err
         println("ERROR: couldn't produce plot :=\n")
-        return err
+        return err # HACK - FIX THIS ***
     end
 end

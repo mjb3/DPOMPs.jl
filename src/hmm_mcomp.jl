@@ -4,6 +4,28 @@
 # - plug ARQ option in (sep function call)
 # - various algorithm options
 
+function run_model_comparison_analysis(models::Array{HiddenMarkovModel, 1}, n_runs::Int64, fn_algorithm::Function)
+    ## run analysis
+    bme = zeros(n_runs, length(models))
+    theta_mu = Array{Array{Float64,1}, 2}(undef, n_runs, length(models))
+    mnames = String[]
+    start_time = time_ns()
+    for m in eachindex(models)
+        println(" processing model m", m, ": ", models[m].model_name)
+        for n in 1:n_runs
+            print("  analysis ", n, " ")
+            rs = fn_algorithm(models[m])
+            bme[n, m] = rs.bme[1]
+            theta_mu[n, m] = rs.mu
+        end
+        push!(mnames, models[m].model_name)
+    end
+    ## process results
+    output = ModelComparisonResults(mnames, bme, vec(Statistics.mean(bme; dims = 1)), vec(Statistics.std(bme; dims = 1)), n_runs, time_ns() - start_time, theta_mu)
+    println("Analysis complete (total runtime := ", Int64(round(output.run_time / C_RT_UNITS)), "s)")
+    return output
+end
+
 """
     run_model_comparison_analysis(model, obs_data; ... )
 
@@ -43,7 +65,7 @@ function run_model_comparison_analysis(models::Array{DPOMPModel, 1}, y::Array{Ob
     ## set up inference algorithm
     function alg_smc2(mdl::HiddenMarkovModel)
         theta_init = rand(mdl.prior, np)
-        return run_pibis(mdl, theta_init, ess_rs_crit, true, C_ACCEPTANCE_ALPHA, npf).bme[1]
+        return run_pibis(mdl, theta_init, ess_rs_crit, true, C_ACCEPTANCE_ALPHA, npf)
     end
     function alg_mibis(mdl::HiddenMarkovModel)
         theta_init = rand(mdl.prior, np)
@@ -61,21 +83,28 @@ function run_model_comparison_analysis(models::Array{DPOMPModel, 1}, y::Array{Ob
         println(" WARNING - algorithm unknown: ", algorithm, "\n - defaulting to SMC2")
         inf_alg = alg_smc2
     end
-    ## run analysis
-    bme = zeros(n_runs, length(models))
-    mnames = String[]
-    start_time = time_ns()
+    # initialise models
+    hmm = HiddenMarkovModel[]
     for m in eachindex(models)
         mdl = get_private_model(models[m], y)
-        println(" processing model m", m, ": ", mdl.model_name)
-        for n in 1:n_runs
-            print("  analysis ", n, " ")
-            bme[n, m] = inf_alg(mdl)
-        end
-        push!(mnames, mdl.model_name)
+        push!(hmm, mdl)
     end
-    ## process results
-    output = ModelComparisonResults(mnames, bme, vec(Statistics.mean(bme; dims = 1)), vec(Statistics.std(bme; dims = 1)), n_runs, time_ns() - start_time)
-    println("Analysis complete (total runtime := ", Int64(round(output.run_time / C_RT_UNITS)), "s)")
-    return output
+    ## run analysis
+    return run_model_comparison_analysis(hmm, n_runs, inf_alg)
+    # bme = zeros(n_runs, length(models))
+    # mnames = String[]
+    # start_time = time_ns()
+    # for m in eachindex(models)
+    #     mdl = get_private_model(models[m], y)
+    #     println(" processing model m", m, ": ", mdl.model_name)
+    #     for n in 1:n_runs
+    #         print("  analysis ", n, " ")
+    #         bme[n, m] = inf_alg(mdl)
+    #     end
+    #     push!(mnames, mdl.model_name)
+    # end
+    # ## process results
+    # output = ModelComparisonResults(mnames, bme, vec(Statistics.mean(bme; dims = 1)), vec(Statistics.std(bme; dims = 1)), n_runs, time_ns() - start_time)
+    # println("Analysis complete (total runtime := ", Int64(round(output.run_time / C_RT_UNITS)), "s)")
+    # return output
 end

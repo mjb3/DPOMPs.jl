@@ -138,7 +138,8 @@ function run_pibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_cr
     ## return weighted importance sample
     compute_is_mu_covar!(mu, cv, theta, w)
     C_DEBUG && println(" mcv: ", mu, cv)
-    bme .*= -2
+    # bme .*= -2
+    bme .= exp.(bme)
     output = ImportanceSample(mu, cv, theta, w, time_ns() - start_time, bme)
     println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s (AR = ", round(100.0 * k_log[2] / k_log[1]; sigdigits = 3), "%)")
     return output
@@ -245,7 +246,8 @@ function run_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs
     C_DEBUG && println(" is mcv: ", mu, cv)
     # bme[1] += log(sum(w) / outer_p)
     # bme[2] += log(Statistics.mean(w))
-    bme .*= -2
+    # bme .*= -2
+    bme .= exp.(bme)
 
     ##
     output = ImportanceSample(mu, cv, theta, w, time_ns() - start_time, bme)
@@ -348,7 +350,8 @@ function run_dfg_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, es
     end # END OF OBS LOOP
     compute_is_mu_covar!(mu, cv, theta, w)
     println(" is mcv: ", mu, cv)
-    bme .*= -2
+    # bme .*= -2
+    bme .= exp.(bme)
     ## return results
     println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s. AR = ", round(100.0 * k_log[2] / k_log[1]; sigdigits = 3), "%")
     return ImportanceSample(mu, cv, theta, w, time_ns() - start_time, bme)#, rejs

@@ -36,16 +36,18 @@ const C_DF_MCMC_STEPS = 50000
 const C_DF_MCMC_ADAPT = 0.2
 const C_MCMC_ADAPT_INTERVALS = 10
 const C_ACCEPTANCE_ALPHA = 1.002
-const C_DF_MBPI_P = 4000
-const C_DF_SMC2_P = 2000
+const C_DF_MBPI_P = 10000
+const C_DF_SMC2_P = 4000
 const C_DF_PF_P = 200
 const C_DF_ESS_CRIT = 0.3
 const C_DF_MBPI_ESS_CRIT = 0.5
 const C_DF_MBPI_MUT = 3
 const C_DEBUG = false
 const C_RT_UNITS = 1000000000
+const C_LBL_BME = "p(y)"
 const C_ALG_NM_SMC2 = "SMC2"
 const C_ALG_NM_MBPI = "MBPI"
+const C_INF_DELTA = 0.0000000000000001
 
 
 df_adapt_period(steps::Int64) = Int64(floor(steps * C_DF_MCMC_ADAPT))
@@ -54,7 +56,7 @@ df_adapt_period(steps::Int64) = Int64(floor(steps * C_DF_MCMC_ADAPT))
 export DPOMPModel, Particle, Event, Observation
 export SimResults, ImportanceSample, RejectionSample, MCMCSample, ARQMCMCSample, ModelComparisonResults
 export generate_model, generate_custom_model, partial_gaussian_obs_model
-export gillespie_sim, run_mcmc_analysis, run_mbp_ibis_analysis, run_smc2_analysis, run_arq_mcmc_analysis, run_model_comparison_analysis
+export gillespie_sim, run_mcmc_analysis, run_ibis_analysis, run_arq_mcmc_analysis, run_model_comparison_analysis
 export plot_trajectory, plot_parameter_trace, plot_parameter_marginal, plot_parameter_heatmap, plot_model_evidence
 export get_observations, tabulate_results, print_results
 export run_custom_mcmc_analysis, generate_custom_particle
@@ -230,7 +232,6 @@ Run an *SMC^2* (i.e. particle filter IBIS) analysis based on `model` and `obs_da
 results = run_smc2_analysis(model, y)   # importance sample
 tabulate_results(results)               # show the results
 ```
-
 """
 function run_smc2_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; np = C_DF_SMC2_P, npf = C_DF_PF_P, ess_rs_crit = C_DF_ESS_CRIT, ind_prop = true, alpha = C_ACCEPTANCE_ALPHA)
     mdl = get_private_model(model, obs_data)
@@ -239,6 +240,52 @@ function run_smc2_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; np
     println("Running: ", np, "-particle SMC^2 analysis (model: ", model.model_name, ")")
     return run_pibis(mdl, theta_init, ess_rs_crit, ind_prop, alpha, npf)
 end
+
+## NEW MAIN INTERFACE
+"""
+    run_ibis_analysis(model, obs_data; ... )
+
+Run an iterative-batch-importance-sampling (IBIS) analysis based on `model` and `obs_data` of type `Observations`.
+
+The default algorithm is *SMC^2* (i.e. particle filter IBIS), the other option is *model-based-proposal IBIS* (use `algorithm = "MBPI"`.) Note that the default value of the optional parameters below is sometimes affected by choice of algorithm. However these are overridden when specified by the user.
+
+**Parameters**
+- `model`               -- `DPOMPModel` (see [DCTMPs.jl models]@ref).
+- `obs_data`            -- `Observations` data.
+
+**Optional parameters**
+- `algorithm`           -- `String`, per above.
+- `np`                  -- number of [outer, i.e. theta] particles.
+
+**Algorithm options**
+- `ess_rs_crit`         -- resampling criteria.
+- `ind_prop`            -- true for independent theta proposals.
+- `alpha`               -- *increase* to *lower* the targeted acceptance rate (default = 1.002.)
+- `npf`                 -- number of [inner] particles for *SMC^2* (default = 200.)
+- `n_props`             -- MBP mutations per step (default: 3.)
+
+**Example**
+```@repl
+# NB. using 'y' and 'model' as above
+results = run_ibis_analysis(model, y)   # importance sample
+tabulate_results(results)               # show the results
+```
+"""
+function run_ibis_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; algorithm::String = C_ALG_NM_SMC2
+    , np = algorithm == C_ALG_NM_SMC2 ? C_DF_SMC2_P : C_DF_MBPI_P, ind_prop = algorithm == C_ALG_NM_SMC2
+    , ess_rs_crit = algorithm == C_ALG_NM_SMC2 ? C_DF_ESS_CRIT : C_DF_MBPI_ESS_CRIT
+    , alpha = C_ACCEPTANCE_ALPHA, npf = C_DF_PF_P, n_props = C_DF_MBPI_MUT)
+
+    mdl = get_private_model(model, obs_data)
+    theta_init = rand(mdl.prior, np)
+    if algorithm == C_ALG_NM_SMC2
+        println("Running: ", np, "-particle SMC^2 analysis (model: ", model.model_name, ")")
+        return run_pibis(mdl, theta_init, ess_rs_crit, ind_prop, alpha, npf)
+    else
+        return run_mbp_ibis(mdl, theta_init, ess_rs_crit, n_props, ind_prop, alpha)
+    end
+end
+
 
 #### ARQ-MCMC ####
 

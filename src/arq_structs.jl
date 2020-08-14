@@ -63,7 +63,6 @@ struct DAGridRequest
 end
 
 ## grid point (internal)
-# BENCHMARK with in place (NO UPDATING GRID ***)
 struct GridPoint
     sample::Array{Float64, 1}   # i.e. theta
     log_likelihood::Float64

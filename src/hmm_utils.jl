@@ -31,7 +31,7 @@ function get_observations(fpath::String)
 end
 
 ## save simulation results to file
-function print_sim_results(results::SimResults, dpath::String)
+function print_results(results::SimResults, dpath::String)
     # check dir
     isdir(dpath) || mkpath(dpath)
     # print sequence
@@ -247,7 +247,7 @@ end
 function tabulate_results(results::ImportanceSample)
     ## samples
     # println("IBIS results:")
-    h = ["θ", "μ", "σ", "BME"]
+    h = ["θ", "μ", "σ", C_LBL_BME]
     d = Matrix(undef, length(results.mu), 4)
     sd = compute_sigma(results.cv)
     d[:,1] .= 1:length(results.mu)
@@ -255,13 +255,13 @@ function tabulate_results(results::ImportanceSample)
     d[:,3] .= round.(sd; sigdigits = C_PR_SIGDIG)
     d[:,4] .= 0
     bme_seq = C_DEBUG ? (1:2) : (1:1)
-    d[bme_seq, 4] = round.(results.bme[bme_seq]; digits = 1)
+    d[bme_seq, 4] = round.(results.bme[bme_seq]; sigdigits = C_PR_SIGDIG)
     PrettyTables.pretty_table(d, h)
 end
 
 ## arq mcmc analysis:
 function tabulate_results(results::ARQMCMCSample)
-    h = ["θ", "Iμ", "Iσ", "Rμ", "Rσ", "SRE", "SRE975", "BME"]
+    h = ["θ", "Iμ", "Iσ", "Rμ", "Rσ", "SRE", "SRE975", C_LBL_BME]
     d = Matrix(undef, length(results.imp_sample.mu), 8)
     is_sd = compute_sigma(results.imp_sample.cv)
     rj_sd = compute_sigma(results.samples.cv)
@@ -273,7 +273,8 @@ function tabulate_results(results::ARQMCMCSample)
     d[:,6] .= round.(results.sre[:,2]; sigdigits = C_PR_SIGDIG)
     d[:,7] .= round.(results.sre[:,3]; sigdigits = C_PR_SIGDIG)
     d[:,8] .= 0
-    d[1,8] = round(results.imp_sample.bme[1]; digits = 1)
+    bme_seq = C_DEBUG ? (1:2) : (1:1)
+    d[bme_seq,8] = round.(results.imp_sample.bme[bme_seq]; sigdigits = C_PR_SIGDIG)
     PrettyTables.pretty_table(d, h)
 end
 
@@ -288,12 +289,19 @@ function resample_is(sample::ImportanceSample; n = 10000)
     return RejectionSample(resamples, sample.mu, sample.cv)
 end
 
+function compute_bayes_factor(ml::Array{Float64,1})
+    output = copy(ml)
+    output ./= ml[1]
+    return output
+end
+
 ## model evidence comparison
 function tabulate_results(results::ModelComparisonResults)
-    h = ["Model", "BME μ", "BME σ"]
-    d = Matrix(undef, length(results.mu), 3)
+    h = ["Model", string("E(", C_LBL_BME, ")"), ":σ", "BF"]   # ADD THETA ******************
+    d = Matrix(undef, length(results.mu), length(h))
     d[:,1] .= results.names
-    d[:,2] .= round.(results.mu; digits = 1)
+    d[:,2] .= round.(results.mu; sigdigits = C_PR_SIGDIG)
     d[:,3] .= round.(results.sigma; sigdigits = C_PR_SIGDIG)
+    d[:,4] .= round.(compute_bayes_factor(results.mu); digits = 1)
     PrettyTables.pretty_table(d, h)
 end
