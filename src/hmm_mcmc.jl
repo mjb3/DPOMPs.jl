@@ -79,19 +79,25 @@ function compute_full_log_like!(model::HiddenMarkovModel, p::Particle)
     t = model.t0_index > 0 ? p.theta[model.t0_index] : 0.0
     lambda = zeros(model.n_events)
     if length(p.trajectory) > 0 && p.trajectory[1].time < t
-        p.log_like[2] = -Inf                    # void sequence
+        p.log_like[1] = -Inf                    # void sequence
     else
-        p.log_like[2] = 0.0                     # reset and initialise
+        p.log_like[1] = 0.0                     # reset and initialise
         p.final_condition .= p.initial_condition
         evt_i = 1
         for obs_i in eachindex(model.obs_data)  # handle trajectory segments
             while evt_i <= length(p.trajectory)
                 p.trajectory[evt_i].time > model.obs_data[obs_i].time && break
                 model.rate_function(lambda, p.theta, p.final_condition)
-                p.log_like[2] += log(lambda[p.trajectory[evt_i].event_type]) - (sum(lambda) * (p.trajectory[evt_i].time - t))
+                try
+                    p.log_like[1] += log(lambda[p.trajectory[evt_i].event_type]) - (sum(lambda) * (p.trajectory[evt_i].time - t))
+                catch
+                    C_DEBUG && println("ERROR:\n theta := ", p.theta, "; pop := ", p.final_condition, "; r := ", lambda)
+                    p.log_like[1] = -Inf
+                    return
+                end
                 p.final_condition .+= model.fn_transition(p.trajectory[evt_i].event_type)
                 if any(x->x<0, p.final_condition)
-                    p.log_like[2] = -Inf
+                    p.log_like[1] = -Inf
                     return
                 else
                     t = p.trajectory[evt_i].time
@@ -99,9 +105,9 @@ function compute_full_log_like!(model::HiddenMarkovModel, p::Particle)
                 end
             end
             model.rate_function(lambda, p.theta, p.final_condition)
-            p.log_like[2] += model.obs_model(model.obs_data[obs_i], p.final_condition, p.theta)
-            p.log_like[2] -= sum(lambda) * (model.obs_data[obs_i].time - t)
-            p.log_like[2] == -Inf && return
+            p.log_like[1] += model.obs_model(model.obs_data[obs_i], p.final_condition, p.theta)
+            p.log_like[1] -= sum(lambda) * (model.obs_data[obs_i].time - t)
+            p.log_like[1] == -Inf && return
             t = model.obs_data[obs_i].time
         end
     end
@@ -112,11 +118,11 @@ function met_hastings_alg!(theta::Array{Float64,3}, mc::Int64, model::HiddenMark
     @initialise_mcmc
     for i in 2:steps            # met_hastings_step
         xf = proposal_alg(model, get_mv_param(propd, c, theta[:,i-1,mc]), xi)
-        if sum(xf.log_like) == -Inf
+        if (xf.prior == -Inf || xf.log_like[1] == -Inf)
             accepted = false    # reject automatically
         else                    # accept or reject
             # NB: [2] == full g(x) log like
-            mh_prob::Float64 = exp(sum(xf.log_like[1:2]) - sum(xi.log_like[1:2]))
+            mh_prob::Float64 = exp(xf.prior - xi.prior) * exp(xf.log_like[1] - xi.log_like[1])
             accepted = (mh_prob > 1 || mh_prob > rand())
         end
         @mcmc_handle_mh_step    # handle accepted proposals
@@ -136,16 +142,16 @@ function gibbs_mh_alg!(theta::Array{Float64,3}, mc::Int64, model::HiddenMarkovMo
         pp = rand() < ppp
         if pp                   # parameter proposal
             theta_f = get_mv_param(propd, c, theta[:,i-1,mc])
-            xf = Particle(theta_f, xi.initial_condition, xi.final_condition, xi.trajectory, [Distributions.logpdf(model.prior, theta_f), 0.0, 0.0])
+            xf = Particle(theta_f, xi.initial_condition, xi.final_condition, xi.trajectory, Distributions.logpdf(model.prior, theta_f), zeros(2))
         else                    # trajectory proposal
             xf = prop_fn(xi)
         end
-        sum(xf.log_like) == -Inf || compute_full_log_like!(model, xf)
-        if sum(xf.log_like) == -Inf
+        (xf.prior == -Inf || xf.log_like[2] == -Inf) || compute_full_log_like!(model, xf)
+        if (xf.prior == -Inf || sum(xf.log_like) == -Inf)
             accepted = false    # reject automatically
         else                    # accept or reject
             # NB: [3] == proposal log like
-            mh_prob::Float64 = exp(sum(xf.log_like[1:3]) - sum(xi.log_like[1:2]))
+            mh_prob::Float64 = exp(xf.prior - xi.prior) * exp(sum(xf.log_like[1:2]) - xi.log_like[1])
             accepted = (mh_prob > 1 || mh_prob > rand())
         end
         @mcmc_handle_mh_step    # handle accepted proposals
@@ -326,7 +332,7 @@ function run_custom_gibbs_mcmc(model::HiddenMarkovModel, theta_init::Array{Float
         x0 = x0_prop(theta_init[:,i])    # generate initial particle
         ## run inference
         C_DEBUG && print(" with x0 := ", x0.theta, " (", length(x0.trajectory), " events)")
-        gibbs_mh_alg!(samples, i, model, adapt_period, x0, trajectory_prop, fin_adapt, ppp, trajectory_prop)
+        a_cnt = gibbs_mh_alg!(samples, i, model, adapt_period, x0, trajectory_prop, fin_adapt, ppp, trajectory_prop)
         println(" - complete (AAR := ", round(100 * a_cnt[2] / (steps - adapt_period), digits = 1), "%)")
     end
     @mcmc_tidy_up
@@ -335,7 +341,7 @@ end
 
 ## ADD DOCS
 function generate_custom_particle(model::HiddenMarkovModel, trajectory::Array{Event,1}; theta::Array{Float64,1} = rand(model.prior), initial_condition::Array{Int64,1} = model.fn_initial_condition())
-    p = Particle(theta, initial_condition, copy(initial_condition), trajectory, zeros(3))
+    p = Particle(theta, initial_condition, copy(initial_condition), trajectory, Distributions.logpdf(model.prior, theta), zeros(2))
     sort!(p.trajectory)
     compute_full_log_like!(model, p)
     return p

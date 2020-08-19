@@ -15,41 +15,41 @@ function iterate_particle!(p::Particle, model::HiddenMarkovModel, time::Float64,
         p.final_condition .+= model.fn_transition(et)  # update population
         push!(p.trajectory, Event(time, et))    # add event to sequence
         if length(p.trajectory) > MAX_TRAJ      # HACK
-            p.log_like[2] = -Inf
-            return p.log_like[2]
+            p.log_like[1] = -Inf
+            return p.log_like[1]
         end
     end
     output = model.obs_model(y, p.final_condition, p.theta)
-    y.obs_id > 0 && (p.log_like[2] += output)
+    y.obs_id > 0 && (p.log_like[1] += output)
     return output
 end
 
 ## DFG version
 # - this could be tidier... ***
-function iterate_dfg_particle!(p::DFGParticle, model::HiddenMarkovModel, time::Float64, y::Observation) #tmax::Float64
-    cum_rates = Array{Float64, 1}(undef, model.n_events)
-    while true
-        model.rate_function(cum_rates, p.theta, p.final_condition)
-        cumsum!(cum_rates, cum_rates)
-        cum_rates[end] == 0.0 && break          # 0 rate test
-        time -= log(rand()) / cum_rates[end]
-        time > y.time && break                  # break if max time exceeded
-        et = choose_event(cum_rates)            # else choose event type (init as final event)
-        p.final_condition .+= model.fn_transition(et)  # update population
-        push!(p.trajectory, Event(time, et))    # add event to sequence
-        if length(p.trajectory) > MAX_TRAJ      # HACK
-            p.log_like[2] = -Inf
-            return p.log_like[2]
-        end
-    end
-    output = zeros(Int64, length(p.final_condition))
-    if y.obs_id > 0
-        output = model.obs_model(y, p.final_condition, p.theta)
-        p.log_like[3] = output[1]
-        p.log_like[2] += p.log_like[3]
-    end
-    return output[2]
-end
+# function iterate_dfg_particle!(p::DFGParticle, model::HiddenMarkovModel, time::Float64, y::Observation) #tmax::Float64
+#     cum_rates = Array{Float64, 1}(undef, model.n_events)
+#     while true
+#         model.rate_function(cum_rates, p.theta, p.final_condition)
+#         cumsum!(cum_rates, cum_rates)
+#         cum_rates[end] == 0.0 && break          # 0 rate test
+#         time -= log(rand()) / cum_rates[end]
+#         time > y.time && break                  # break if max time exceeded
+#         et = choose_event(cum_rates)            # else choose event type (init as final event)
+#         p.final_condition .+= model.fn_transition(et)  # update population
+#         push!(p.trajectory, Event(time, et))    # add event to sequence
+#         if length(p.trajectory) > MAX_TRAJ      # HACK
+#             p.log_like[1] = -Inf
+#             return p.log_like[1]
+#         end
+#     end
+#     output = zeros(Int64, length(p.final_condition))    # MESS CLEAR THIS UP
+#     if y.obs_id > 0
+#         output = model.obs_model(y, p.final_condition, p.theta)
+#         p.log_like[2] = output[1]
+#         p.log_like[1] += p.log_like[2]
+#     end
+#     return output[2]
+# end
 
 ## gillespie sim iteration (full state vectors)
 function iterate_particle!(p::Particle, pop_v::Array{Array{Int64},1}, model::HiddenMarkovModel, time::Float64, y::Observation, cmpt_ll::Bool = true) # GET RID *
@@ -66,7 +66,7 @@ function iterate_particle!(p::Particle, pop_v::Array{Array{Int64},1}, model::Hid
         push!(p.trajectory, Event(time, et))    # add event to sequence
         push!(pop_v, copy(p.final_condition))
     end
-    cmpt_ll && (p.log_like[2] += model.obs_model(y, p.final_condition, p.theta))
+    cmpt_ll && (p.log_like[1] += model.obs_model(y, p.final_condition, p.theta))
 end
 
 ## generate 'blank' observations for sim
@@ -87,7 +87,7 @@ function gillespie_sim(model::HiddenMarkovModel, theta::Array{Float64, 1}, obser
     # initialise some things
     y = deepcopy(model.obs_data)
     ic = model.fn_initial_condition()
-    p = Particle(theta, ic, copy(ic), Event[], [Distributions.logpdf(model.prior, theta), 0.0])
+    p = Particle(theta, ic, copy(ic), Event[], Distributions.logpdf(model.prior, theta), zeros(2))
     pop_v = Array{Int64}[]
     t = model.t0_index == 0 ? 0.0 : theta[model.t0_index]
     # run
@@ -156,13 +156,10 @@ end
 #### #### #### #### #### #### ####
 
 ## for inference
-function generate_x0(model::HiddenMarkovModel, theta::Array{Float64, 1}, ntries = 100000)
+function generate_x0(model::HiddenMarkovModel, theta::Array{Float64, 1}, ntries = 10000)
     for i in 1:ntries
         x0 = gillespie_sim(model, theta, false).particle
-        if x0.log_like[2] != -Inf
-            x0.log_like[1] = Distributions.logpdf(model.prior, theta)
-            return x0
-        end
+        x0.log_like[1] != -Inf && return x0
     end
     ## ADD PROPER ERR HANDLING ***
     println("WARNING: having an issue generating a valid trajectory for ", theta)

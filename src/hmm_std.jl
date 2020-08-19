@@ -23,7 +23,7 @@ function get_std_mcmc_proposal_fn(model::HiddenMarkovModel, mvp::Int64)
         t0 = (model.t0_index == 0 ? 0.0 : xi.theta[model.t0_index])
         xf_trajectory = deepcopy(xi.trajectory)
         if prop_type > 2       # move
-            length(xi.trajectory) == 0 && (return Particle(xi.theta, xi.initial_condition, xi.final_condition, xf_trajectory, [xi.log_like[1], -Inf, -Inf]))
+            length(xi.trajectory) == 0 && (return Particle(xi.theta, xi.initial_condition, xi.final_condition, xf_trajectory, xi.prior, [-Inf, -Inf]))
             # choose event and define new one
             evt_i = rand(1:length(xi.trajectory))
             evt_tp = xi.trajectory[evt_i].event_type
@@ -43,7 +43,7 @@ function get_std_mcmc_proposal_fn(model::HiddenMarkovModel, mvp::Int64)
                 prop_lk = log((model.n_events * (model.obs_data[end].time - t0)) / length(xf_trajectory))
             else                # delete
                 # println(" deleting... tp:", tp, " - ec: ", ec)
-                length(xi.trajectory) == 0 && (return Particle(xi.theta, xi.initial_condition, xi.final_condition, xf_trajectory, [xi.log_like[1], -Inf, -Inf]))
+                length(xi.trajectory) == 0 && (return Particle(xi.theta, xi.initial_condition, xi.final_condition, xf_trajectory, xi.prior, [-Inf, -Inf]))
                 # choose event index (repeat if != tp)
                 evt_i = rand(1:length(xi.trajectory))
                 # remove
@@ -52,7 +52,7 @@ function get_std_mcmc_proposal_fn(model::HiddenMarkovModel, mvp::Int64)
             end
             # return (Particle, prop_ll)
         end
-        return Particle(xi.theta, xi.initial_condition, copy(xi.final_condition), xf_trajectory, [xi.log_like[1], 0.0, prop_lk])
+        return Particle(xi.theta, xi.initial_condition, copy(xi.final_condition), xf_trajectory, xi.prior, [0.0, prop_lk])
     end
     return std_mcmc_proposal
 end

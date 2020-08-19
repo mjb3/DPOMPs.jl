@@ -81,10 +81,10 @@ end
 
 ## up to time y_i
 function partial_model_based_proposal(model::HiddenMarkovModel, theta_f::Array{Float64,1}, xi::Particle, ymax::Int64)
-    xf = Particle(theta_f, copy(xi.initial_condition), copy(xi.initial_condition), Event[], [Distributions.logpdf(model.prior,theta_f), 0.0, 0.0])
+    xf = Particle(theta_f, copy(xi.initial_condition), copy(xi.initial_condition), Event[], Distributions.logpdf(model.prior,theta_f), zeros(2))
     ## evaluate prior density
-    if xf.log_like[1] == -Inf
-        xf.log_like[2] = xf.log_like[1]
+    if xf.prior == -Inf
+        xf.log_like .= -Inf
         return xf
     else
         # debug && println("init ll: ", xf.log_like[2])
@@ -96,12 +96,12 @@ function partial_model_based_proposal(model::HiddenMarkovModel, theta_f::Array{F
             ## iterate MBP
             evt_i = iterate_mbp!(xf, pop_i, model, obs_i, evt_i, time, xi)
             if length(xf.trajectory) > MAX_TRAJ # - HACK: MAX trajectory check
-                xf.log_like[2] = -Inf
+                xf.log_like[1] = -Inf
                 return xf
             end
             time = model.obs_data[obs_i].time   ## handle observation
-            xf.log_like[3] = model.obs_model(model.obs_data[obs_i], xf.final_condition, theta_f)
-            model.obs_data[obs_i].obs_id > 0 && (xf.log_like[2] += xf.log_like[3])
+            xf.log_like[2] = model.obs_model(model.obs_data[obs_i], xf.final_condition, theta_f)
+            model.obs_data[obs_i].obs_id > 0 && (xf.log_like[1] += xf.log_like[2])
         end
         return xf
     end
@@ -111,12 +111,12 @@ end
 # - CHANGE BACK TO ORIG DESIG?
 # function partial_dfg_model_based_proposal(model::HiddenMarkovModel, theta_f::Array{Float64,1}, xi::DFGParticle, ymax::Int64)
 #     # dfg = zeros(Int64, length(model.obs_data), length(xi.p.initial_condition))
-#     xf = DFGParticle(theta_f, copy(xi.initial_condition), copy(xi.initial_condition), Event[], [Distibutions.logpdf(model.prior,theta_f), 0.0, 0.0], zeros(Int64, length(model.obs_data), length(xi.initial_condition)))
+#     xf = DFGParticle(theta_f, copy(xi.initial_condition), copy(xi.initial_condition), Event[], Distibutions.logpdf(model.prior,theta_f), 0.0, 0.0], zeros(Int64, length(model.obs_data), length(xi.initial_condition)))
 #     ## evaluate prior density
 #     # println(" DFG PMBP 1")
-#     if xf.log_like[1] == -Inf
+#     if xf.prior == -Inf
 #         # println(" DFG PMBP 2.1")
-#         xf.log_like[2:3] .= xf.log_like[1]
+#         xf.log_like .= xf.prior
 #         return xf
 #     else
 #         # debug && println("init ll: ", xf.log_like[2])
@@ -173,7 +173,7 @@ end
 #     ## evaluate prior density
 #     lp = Distibutions.logpdf(model.prior,theta_f)
 #     if lp == -Inf
-#         return Particle(theta_f, xi.initial_condition, xi.trajectory, [lp, lp])
+#         return Particle(theta_f, xi.initial_condition, xi.trajectory, prior, [lp, lp])
 #     else
 #         ## peturb observation times:
 #         for obs_i in eachindex(model.obs_data)
@@ -191,8 +191,7 @@ end
 #         time::Float64 = model.t0_index == 0 ? 0.0 : max(theta_f[model.t0_index], xi.theta[model.t0_index])
 #         for obs_i in eachindex(model.obs_data)
 #             evt_i = iterate_mbp!(pop_f, pop_i, xf_trajectory, model, obs_i, evt_i, time, theta_f, xi)
-#             # - HACK: MAX trajectory check
-#             # length(xf_trajectory) > MAX_TRAJ && (return Particle(theta_f, xi.initial_condition, xi.trajectory, -Inf))
+#             # - add HACK: MAX trajectory check
 #             ## handle observation
 #             ll += custom_om_example!(pop_g, theta_f, xf_trajectory, evt_f, time, model.obs_data[obs_i].time)
 #             time = model.obs_data[obs_i].time

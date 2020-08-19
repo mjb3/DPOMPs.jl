@@ -30,7 +30,8 @@ function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, b
     cv = zeros(length(is_mu),length(is_mu))
     # shared HMM fn:
     compute_is_mu_covar!(is_mu, cv, theta_w[1], theta_w[2])
-    is_output = ImportanceSample(is_mu, cv, theta_w[1], theta_w[2], 0, [sum(theta_w[2]) / (mdl.sample_resolution ^ n_theta), Statistics.mean(theta_w[2])])
+    grsp = mdl.sample_resolution ^ n_theta
+    is_output = ImportanceSample(is_mu, cv, theta_w[1], theta_w[2], 0, [log(sum(theta_w[2]) / grsp), log(sum(theta_w[2]) / (length(theta_w[2])^2))])
     ## return results
     output = ARQMCMCSample(is_output, rejs, burnin, mdl.sample_resolution, mdl.sample_limit, mdl.grid_range, sre, time_ns() - start_time)
     println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s. (Iμ = ", round.(is_output.mu; sigdigits = C_PR_SIGDIG), "; Rμ = ", round.(rejs.mu; sigdigits = C_PR_SIGDIG), "; BME = ", round.(output.imp_sample.bme[1]; sigdigits = C_PR_SIGDIG), ")")
@@ -54,15 +55,15 @@ Run ARQMCMC analysis with `chains` Markov chains, where `n_chains > 1` the Gelma
 - `tgt_ar`              -- acceptance rate (default: 0.33.)
 
 """
-function run_arq_mcmc_analysis(model::ARQModel; sample_resolution::Int64 = 30, sample_limit::Int64 = 3, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), n_chains::Int64 = 5, tgt_ar::Float64 = 0.33)#, retain_samples::Bool = true
+function run_arq_mcmc_analysis(model::ARQModel; sample_resolution::Int64 = C_DF_ARQ_SR, sample_limit::Int64 = default_arq_sl(model.parameter_range), steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), n_chains::Int64 = 5, tgt_ar::Float64 = 0.33)#, retain_samples::Bool = true
     mdl = LikelihoodModel(model.pdf, model.parameter_range, sample_resolution, sample_limit, 0.0)
     println("Running: ARQMCMC analysis (", n_chains, " x " , steps, " steps):")
     return run_inner_mcmc_analysis(mdl, false, steps, burnin, n_chains, tgt_ar)
 end
 
 ## - for direct access with internal model
-function run_arq_mcmc_analysis(model::HiddenMarkovModel, theta_range::Array{Float64,2}; sample_resolution::Int64 = 30, sample_limit::Int64 = 3, n_chains::Int64 = 5, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), tgt_ar::Float64 = 0.33, np::Int64 = 200, ess_crit = 0.3)
-    mdl = ARQModel(get_log_pdf_fn(model, np; essc = ess_crit), theta_range)
+function run_arq_mcmc_analysis(model::HiddenMarkovModel, theta_range::Array{Float64,2}; sample_resolution::Int64 = C_DF_ARQ_SR, sample_limit::Int64 = default_arq_sl(theta_range), n_chains::Int64 = 5, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), tgt_ar::Float64 = 0.33, np::Int64 = 200, ess_crit = 0.3)
+    mdl = ARQModel(get_log_pdf_fn(model, np; essc = ess_crit, ppdf = true), theta_range)
     println(" ARQ model initialised: ", model.model_name)
     return run_arq_mcmc_analysis(mdl; sample_resolution = sample_resolution, sample_limit = sample_limit, n_chains = n_chains, steps = steps, burnin = burnin, tgt_ar = tgt_ar)
 end
@@ -80,7 +81,7 @@ Run ARQMCMC analysis with `chains` Markov chains, where `n_chains > 1` the Gelma
 
 **Optional**
 - `sample_resolution`   -- i.e. the length of each dimension in the importance sample.
-- `sample_limit`        -- sample limit, should be increased when the variance of `model.pdf` is high (default: 3.)
+- `sample_limit`        -- sample limit, should be increased when the variance of `model.pdf` is high (default: 1.)
 - `n_chains`            -- number of Markov chains (default: 3.)
 - `steps`               -- number of iterations.
 - `burnin`              -- number of discarded samples.
@@ -89,7 +90,7 @@ Run ARQMCMC analysis with `chains` Markov chains, where `n_chains > 1` the Gelma
 - `ess_crit`            -- acceptance rate (default: 0.33.)
 
 """
-function run_arq_mcmc_analysis(model::DPOMPModel, obs_data::Array{Observation,1}, theta_range::Array{Float64,2}; sample_resolution::Int64 = 30, sample_limit::Int64 = 3, n_chains::Int64 = 5, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), tgt_ar::Float64 = 0.33, np::Int64 = 200, ess_crit = 0.3)
+function run_arq_mcmc_analysis(model::DPOMPModel, obs_data::Array{Observation,1}, theta_range::Array{Float64,2}; sample_resolution::Int64 = C_DF_ARQ_SR, sample_limit::Int64 = default_arq_sl(theta_range), n_chains::Int64 = 5, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), tgt_ar::Float64 = 0.33, np::Int64 = 200, ess_crit = 0.3)
     hmm = get_private_model(model, obs_data)
     return run_arq_mcmc_analysis(hmm, theta_range; sample_resolution = sample_resolution, sample_limit = sample_limit, n_chains = n_chains, steps = steps, burnin = burnin, tgt_ar = tgt_ar, np = np, ess_crit = ess_crit)
 end

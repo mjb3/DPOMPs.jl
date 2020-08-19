@@ -156,16 +156,30 @@ Plot the Bayesian model evidence (BME) from a model comparison analysis, using [
 - `boxplot`   -- `true` for a series of boxplots, else a simple UnicodePlots.barplot showing only the average BME for each model variant (default.)
 
 """
-function plot_model_evidence(results::ModelComparisonResults, boxplot = false)
+function plot_model_comparison(results::ModelComparisonResults, boxplot = false)
+    c_plot_title = "Estimated model evidence"
     # this is a HACK - need to handle bad results better...
     try
         if boxplot
-            return UnicodePlots.boxplot(results.names, [results.bme[:, i] for i in 1:size(results.bme,2)], title = "Model evidence estimates", xlabel = "BME")
+            return UnicodePlots.boxplot(results.names, [results.bme[:, i] for i in 1:size(results.bme,2)], title = c_plot_title, xlabel = C_LBL_BME)
         else
-            return UnicodePlots.barplot(results.names, round.(results.mu; digits = 1), title = "Model evidence")
+            return UnicodePlots.barplot(results.names, round.(-results.mu; digits = 1), title = c_plot_title, xlabel = string("-", C_LBL_BME))
         end
     catch err
         println("ERROR: couldn't produce plot :=\n")
         return err # HACK - FIX THIS ***
     end
+end
+
+## for priors
+function plot_pdf(d::Distributions.Distribution, mx = 1.0, mn = 0.0, np = 1000)
+    pd = zeros(np)
+    x = zeros(np)
+    inc = (mx - mn) / np
+    for i in eachindex(pd)
+        x[i] = mn + (i * inc)
+        pd[i] = Distributions.pdf(d, x[i])
+    end
+    p = UnicodePlots.lineplot(x, pd, title = "PDF", xlabel = "x", ylabel = "density")
+    return p
 end

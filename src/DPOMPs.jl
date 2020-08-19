@@ -30,27 +30,35 @@ import StatsBase
 import Random           # for bitrand() function in arq
 
 ### global constants
+const C_DEBUG = false
+const C_RT_UNITS = 1000000000
+const C_LBL_BME = "ln p(y)"
+const C_ALG_NM_SMC2 = "SMC2"
+const C_ALG_NM_MBPI = "MBPI"
+const C_INF_DELTA = 0.0000000000000001
 const MAX_TRAJ = 196000
 const C_PR_SIGDIG = 3
+
+## MCMC
 const C_DF_MCMC_STEPS = 50000
 const C_DF_MCMC_ADAPT = 0.2
 const C_MCMC_ADAPT_INTERVALS = 10
 const C_ACCEPTANCE_ALPHA = 1.002
+
+## IBIS
 const C_DF_MBPI_P = 10000
 const C_DF_SMC2_P = 4000
 const C_DF_PF_P = 200
 const C_DF_ESS_CRIT = 0.3
 const C_DF_MBPI_ESS_CRIT = 0.5
 const C_DF_MBPI_MUT = 3
-const C_DEBUG = false
-const C_RT_UNITS = 1000000000
-const C_LBL_BME = "p(y)"
-const C_ALG_NM_SMC2 = "SMC2"
-const C_ALG_NM_MBPI = "MBPI"
-const C_INF_DELTA = 0.0000000000000001
 
+## ARQ
+const C_DF_ARQ_SR = 30
+const C_DF_ARQ_MC = 5
 
 df_adapt_period(steps::Int64) = Int64(floor(steps * C_DF_MCMC_ADAPT))
+default_arq_sl(grng::Array{Float64,2}) = size(grng, 1) > 2 ? 1 : 7
 
 ### public stuffs ###
 export DPOMPModel, Particle, Event, Observation

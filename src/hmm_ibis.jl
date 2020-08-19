@@ -139,7 +139,7 @@ function run_pibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_cr
     compute_is_mu_covar!(mu, cv, theta, w)
     C_DEBUG && println(" mcv: ", mu, cv)
     # bme .*= -2
-    bme .= exp.(bme)
+    # bme .= exp.(bme)
     output = ImportanceSample(mu, cv, theta, w, time_ns() - start_time, bme)
     println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s (AR = ", round(100.0 * k_log[2] / k_log[1]; sigdigits = 3), "%)")
     return output
@@ -161,7 +161,7 @@ function run_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs
     # theta = copy(theta_init) # GET RID? *
     for p in eachindex(ptcls)
         ic = model.fn_initial_condition()
-        ptcls[p] = Particle(theta[:,p], ic, copy(ic), Event[], [Distributions.logpdf(model.prior, theta[:,p]), 0.0])
+        ptcls[p] = Particle(theta[:,p], ic, copy(ic), Event[], Distributions.logpdf(model.prior, theta[:,p]), zeros(2))
     end
     ## resampling workspace
     ptcls2 = deepcopy(ptcls)
@@ -216,10 +216,12 @@ function run_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs
                     for mki in 1:n_props
                         ## propose new theta - independent OR conditional on current sample (rec'd)
                         theta_f = ind_prop ? get_mv_param(propd, 1.0, mu) : get_mv_param(propd, tj, ptcls[p].theta)
-                        xf = partial_model_based_proposal(model, theta_f, ptcls[p], obs_i)
-                        ## HACK: ([2] incorporates prior)
-                        if exp(xf.log_like[2] - ptcls[p].log_like[2]) > rand()
-                            mtd_gx[p] = exp(xf.log_like[3]) # - RETRIEVE MOST RECENT MARGINAL
+                        xf = partial_model_based_proposal(model, theta_f, ptcls[p], obs_i) # computes prior
+                        ## HACK: ([2] incorporates prior) -obsolete
+                        # if exp(xf.log_like[2] - ptcls[p].log_like[2]) > rand()
+                        ## ([2] no longer incorporates prior)
+                        if (exp(xf.prior - ptcls[p].prior) * exp(xf.log_like[1] - ptcls[p].log_like[1])) > rand()
+                            mtd_gx[p] = exp(xf.log_like[2]) # - RETRIEVE MOST RECENT MARGINAL
                             ptcls[p] = xf
                             k_log[2] += 1
                             tj *= alpha
@@ -247,7 +249,7 @@ function run_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs
     # bme[1] += log(sum(w) / outer_p)
     # bme[2] += log(Statistics.mean(w))
     # bme .*= -2
-    bme .= exp.(bme)
+    # bme .= exp.(bme)
 
     ##
     output = ImportanceSample(mu, cv, theta, w, time_ns() - start_time, bme)
@@ -255,7 +257,7 @@ function run_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs
     return output
 end
 
-## MBP IBIS algorithm with dependent f/g
+## MBP IBIS algorithm with dependent f/g - NOT VALIDATED ***
 function run_dfg_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_crit = C_DF_ESS_CRIT; n_props = 3, ind_prop = false, alpha = 1.002)
     outer_p = size(theta, 1)
     println("running MBP IBIS (DFG). n = ", outer_p)
@@ -269,7 +271,7 @@ function run_dfg_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, es
     for p in eachindex(ptcls)
         ic = model.fn_initial_condition()
         dfg = zeros(Int64, length(model.obs_data), length(ic))
-        ptcls[p] = DFGParticle(theta[p,:], ic, copy(ic), Event[], [Distributions.logpdf(model.prior, theta[p,:]), 0.0, 0.0], dfg)
+        ptcls[p] = DFGParticle(theta[p,:], ic, copy(ic), Event[], Distributions.logpdf(model.prior, theta[p,:]), zeros(2), dfg)
     end
     ## resampling workspace
     ptcls2 = deepcopy(ptcls)
@@ -295,7 +297,7 @@ function run_dfg_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, es
             for p in eachindex(ptcls)
                 ## compute incremental weights (i.e. run pf)
                 ptcls[p].g_trans[obs_i,:] .= iterate_dfg_particle!(ptcls[p], model, t[p], model.obs_data[obs_i])
-                gx[p] = exp(ptcls[p].log_like[3])
+                gx[p] = exp(ptcls[p].log_like[2])
             end
             ## COMPUTE L and update weights
             lml = log(sum(w .* gx) / sum(w))
@@ -324,8 +326,8 @@ function run_dfg_mbp_ibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, es
                         theta_f = ind_prop ? get_mv_param(propd, 1.0, mu) : get_mv_param(propd, tj, ptcls[p].theta)
                         xf = partial_dfg_model_based_proposal(model, theta_f, ptcls[p], obs_i)
                         ## HACK:
-                        if exp(xf.log_like[2] - ptcls[p].log_like[2]) > rand()
-                            mtd_gx[p] = exp(xf.log_like[3])
+                        if (exp(xf.prior - ptcls[p].prior) * exp(xf.log_like[1] - ptcls[p].log_like[1])) > rand()
+                            mtd_gx[p] = exp(xf.log_like[2])
                             ptcls[p] = xf
                             k_log[2] += 1
                             tj *= alpha

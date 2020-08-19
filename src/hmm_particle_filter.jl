@@ -148,7 +148,7 @@ function estimate_likelihood(model::HiddenMarkovModel, parameters::Array{Float64
 end
 
 ## generate pdf function
-function get_log_pdf_fn(mdl::HiddenMarkovModel, p::Int64 = 200, rs_type::Int64 = 1; essc::Float64 = 0.3, like::Bool = true)
+function get_log_pdf_fn(mdl::HiddenMarkovModel, p::Int64 = 200, rs_type::Int64 = 1; essc::Float64 = 0.3, ppdf::Bool = false)
     ## resampler
     if rs_type == 2
         fn_rs = rsp_stratified      # Kitagawa (1996)
@@ -160,12 +160,15 @@ function get_log_pdf_fn(mdl::HiddenMarkovModel, p::Int64 = 200, rs_type::Int64 =
     ## population size
     ps = length(mdl.fn_initial_condition())
     ## generate function and return
-    function comp_log_pdf(parameters::Array{Float64, 1})
-        if like
-            return estimate_likelihood(mdl, parameters, p, ps, fn_rs, essc)
-        else
+    if ppdf
+        function comp_log_ppdf(parameters::Array{Float64, 1})
             return Distributions.logpdf(mdl.prior, parameters) + estimate_likelihood(mdl, parameters, p, ps, fn_rs, essc)
         end
+        return comp_log_ppdf
+    else
+        function comp_log_pdf(parameters::Array{Float64, 1})
+            return estimate_likelihood(mdl, parameters, p, ps, fn_rs, essc)
+        end
+        return comp_log_pdf
     end
-    return comp_log_pdf
 end

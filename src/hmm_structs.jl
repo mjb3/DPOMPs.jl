@@ -53,7 +53,8 @@ struct Particle
     initial_condition::Array{Int64}
     final_condition::Array{Int64}
     trajectory::Array{Event,1}
-    log_like::Array{Float64,1}  # log prior; full log like g(x); [latest] marginal g(x) / proposal likelihood (SMC / MCMC)
+    prior::Float64              # log prior;
+    log_like::Array{Float64,1}  # full log like g(x); [latest] marginal g(x) / proposal likelihood (SMC / MCMC)
 end
 
 # - for dependent f/g
