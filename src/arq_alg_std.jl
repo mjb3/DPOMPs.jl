@@ -55,7 +55,7 @@ function arq_met_hastings!(samples::Array{Float64,3}, mc::Int64, grid::Dict, mod
             ###
             mc_log_like[i] = xf.result.log_likelihood
             ## mh step
-            mh_prob = exp(mc_log_like[i] - mc_log_like[i - 1])
+            mh_prob = exp(model.prior(xf.result.sample) - model.prior(samples[:,i-1,mc]) + mc_log_like[i] - mc_log_like[i - 1])
             # accept or reject
             if mh_prob > 1.0
                 mc_accepted[i] = true

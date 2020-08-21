@@ -1,5 +1,5 @@
 ## for internal use (called by public functions)
-function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, burnin::Int64, chains::Int64, tgt_ar::Float64)#, retain_samples::Bool
+function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, burnin::Int64, chains::Int64, tgt_ar::Float64, grid = Dict())#, retain_samples::Bool
     ## for performance evaluation
     start_time = time_ns()
     ## designate inner MCMC function and results array
@@ -9,7 +9,7 @@ function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, b
     n_theta = size(mdl.grid_range, 1)
     samples = zeros(n_theta, steps, chains)
     ## initialise importance sample
-    grid = Dict() # {Array{Int64, 1}, GridPoint}
+    # grid = Dict() # {Array{Int64, 1}, GridPoint}
     is_uc = 0.0
     ## run N chains
     for i in 1:chains
@@ -55,17 +55,34 @@ Run ARQMCMC analysis with `chains` Markov chains, where `n_chains > 1` the Gelma
 - `tgt_ar`              -- acceptance rate (default: 0.33.)
 
 """
-function run_arq_mcmc_analysis(model::ARQModel; sample_resolution::Int64 = C_DF_ARQ_SR, sample_limit::Int64 = default_arq_sl(model.parameter_range), steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), n_chains::Int64 = 5, tgt_ar::Float64 = 0.33)#, retain_samples::Bool = true
-    mdl = LikelihoodModel(model.pdf, model.parameter_range, sample_resolution, sample_limit, 0.0)
-    println("Running: ARQMCMC analysis (", n_chains, " x " , steps, " steps):")
-    return run_inner_mcmc_analysis(mdl, false, steps, burnin, n_chains, tgt_ar)
+function run_arq_mcmc_analysis(model::ARQModel, priors = []; sample_resolution::Int64 = C_DF_ARQ_SR, sample_limit::Int64 = default_arq_sl(model.parameter_range), steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), n_chains::Int64 = 5, tgt_ar::Float64 = 0.33)#, retain_samples::Bool = true
+    if length(priors) > 1
+        output = []
+        ## initialise importance sample
+        grid = Dict() # {Array{Int64, 1}, GridPoint}
+        for i in eachindex(priors)
+            println("Running: ARQMCMC analysis ", i, " / ", length(priors)," - (", n_chains, " x " , steps, " steps):")
+            prior = get_arq_prior(priors[i])
+            mdl = LikelihoodModel(model.pdf, model.parameter_range, sample_resolution, sample_limit, 0.0, prior)
+            push!(output, run_inner_mcmc_analysis(mdl, false, steps, burnin, n_chains, tgt_ar, grid))
+        end
+        return output
+    else
+        println("Running: ARQMCMC analysis (", n_chains, " x " , steps, " steps):")
+        prior = length(priors) == 1 ? get_arq_prior(priors[1]) : get_df_arq_prior(model.parameter_range)
+        mdl = LikelihoodModel(model.pdf, model.parameter_range, sample_resolution, sample_limit, 0.0, prior)
+        return run_inner_mcmc_analysis(mdl, false, steps, burnin, n_chains, tgt_ar)
+    end
+    # mdl = LikelihoodModel(model.pdf, model.parameter_range, sample_resolution, sample_limit, 0.0)
+    # println("Running: ARQMCMC analysis (", n_chains, " x " , steps, " steps):")
+    # return run_inner_mcmc_analysis(mdl, false, steps, burnin, n_chains, tgt_ar)
 end
 
 ## - for direct access with internal model
 function run_arq_mcmc_analysis(model::HiddenMarkovModel, theta_range::Array{Float64,2}; sample_resolution::Int64 = C_DF_ARQ_SR, sample_limit::Int64 = default_arq_sl(theta_range), n_chains::Int64 = 5, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), tgt_ar::Float64 = 0.33, np::Int64 = 200, ess_crit = 0.3)
     mdl = ARQModel(get_log_pdf_fn(model, np; essc = ess_crit, ppdf = true), theta_range)
     println(" ARQ model initialised: ", model.model_name)
-    return run_arq_mcmc_analysis(mdl; sample_resolution = sample_resolution, sample_limit = sample_limit, n_chains = n_chains, steps = steps, burnin = burnin, tgt_ar = tgt_ar)
+    return run_arq_mcmc_analysis(mdl, [model.prior]; sample_resolution = sample_resolution, sample_limit = sample_limit, n_chains = n_chains, steps = steps, burnin = burnin, tgt_ar = tgt_ar)
 end
 
 ## - public interface for DPOMP.jl

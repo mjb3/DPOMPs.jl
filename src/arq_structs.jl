@@ -32,7 +32,7 @@ end
 
 ## for internal use only
 # NEED TO MERGE ARQModel?
-struct LikelihoodModel{PFT<:Function}
+struct LikelihoodModel{PFT<:Function, PRT<:Function}
     # model_name::String
     pdf::PFT
     grid_range::Array{Float64, 2}
@@ -40,6 +40,7 @@ struct LikelihoodModel{PFT<:Function}
     sample_resolution::Int64
     sample_limit::Int64
     jitter::Float64
+    prior::PRT
 end
 
 ## DA grid sample

@@ -1,5 +1,24 @@
 ### common algorithm stuffs
 
+## new prior functions
+function get_df_arq_prior(theta_range::Array{Float64,2})
+    function arq_prior(theta::Array{Float64,1})
+        for i in eachindex(theta)
+            theta[i] < theta_range[i, 1] && return -Inf
+            theta[i] > theta_range[i, 2] && return -Inf
+        end
+        return 0.0
+    end
+    return arq_prior
+end
+
+function get_arq_prior(priord::Distributions.Distribution)
+    function arq_prior(theta::Array{Float64,1})
+        return Distributions.logpdf(priord, theta)
+    end
+    return arq_prior
+end
+
 ## 'prior'
 function validate_theta(theta::Array{Int64, 1}, max_idx::Int64)
     for i in eachindex(theta)
@@ -8,7 +27,7 @@ function validate_theta(theta::Array{Int64, 1}, max_idx::Int64)
     return true
 end
 
-## get theta coords from index
+## get theta value from index
 function get_theta_val(model::LikelihoodModel, theta::Array{Int64, 1}, jitter = model.jitter)
     output = zeros(Float64, length(theta))
     for i in eachindex(theta)
