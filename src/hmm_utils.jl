@@ -304,3 +304,24 @@ function tabulate_results(results::ModelComparisonResults; null_index = 1)
     d[:,4] .= round.(compute_bayes_factor(results.mu, null_index); digits = 1)
     PrettyTables.pretty_table(d, h)
 end
+
+## pf interface
+"""
+    get_particle_filter_lpdf(model, obs_data; ... )
+
+Generate a SMC [log] likelihood estimating function for a `DPOMPModel` -- a.k.a. a particle filter.
+
+**Parameters**
+- `model`               -- `DPOMPModel` (see [DCTMPs.jl models]@ref).
+- `obs_data`            -- `Observations` data.
+
+**Named parameters**
+- `np`                  -- number of particles.
+- `rs_type`             -- resampling method: 2 for stratified, 3 for multinomial, or 1 for systematic (the default.)
+- `ess_rs_crit`         -- effective-sample-size resampling criteria.
+```
+"""
+function get_particle_filter_lpdf(model::DPOMPModel, obs_data::Array{Observation,1}; np::Int64 = C_DF_PF_P, rs_type::Int64 = 1, essc::Float64 = C_DF_ESS_CRIT)
+    mdl = get_private_model(model, obs_data)
+    return get_log_pdf_fn(mdl, np, rs_type; essc = essc)
+end

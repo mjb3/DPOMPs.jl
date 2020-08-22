@@ -30,7 +30,7 @@ import StatsBase
 import Random           # for bitrand() function in arq
 
 ### global constants
-const C_DEBUG = false
+const C_DEBUG = true
 const C_RT_UNITS = 1000000000
 const C_LBL_BME = "-ln p(y)"
 const C_ALG_NM_SMC2 = "SMC2"
@@ -53,23 +53,23 @@ const C_DF_ESS_CRIT = 0.3
 const C_DF_MBPI_ESS_CRIT = 0.5
 const C_DF_MBPI_MUT = 3
 
-## ARQ
-const C_DF_ARQ_SL = 1
-const C_DF_ARQ_SR = 30
-const C_DF_ARQ_MC = 5
-const C_DF_ARQ_AR = 0.33
-const C_DF_ARQ_JT = 0.0
+## ARQ defaults
+const C_DF_ARQ_SL = 1       # sample limit
+const C_DF_ARQ_SR = 100     # inital sample distribution
+const C_DF_ARQ_CJ = 50      # contingency jumps
+const C_DF_ARQ_MC = 5       # chains
+const C_DF_ARQ_AR = 0.33    # targeted AR
+const C_DF_ARQ_JT = 0.0     # jitter
 
 df_adapt_period(steps::Int64) = Int64(floor(steps * C_DF_MCMC_ADAPT))
-# default_arq_sl(grng::Array{Float64,2}) = size(grng, 1) > 2 ? 1 : 7
 
 ### public stuffs ###
-export DPOMPModel, Particle, Event, Observation
+export DPOMPModel, Particle, Event, Observation, ARQModel
 export SimResults, ImportanceSample, RejectionSample, MCMCSample, ARQMCMCSample, ModelComparisonResults
 export generate_model, generate_custom_model, partial_gaussian_obs_model
 export gillespie_sim, run_mcmc_analysis, run_ibis_analysis, run_arq_mcmc_analysis, run_model_comparison_analysis
 export plot_trajectory, plot_parameter_trace, plot_parameter_marginal, plot_parameter_heatmap, plot_model_evidence
-export get_observations, tabulate_results, print_results
+export get_observations, tabulate_results, print_results, get_particle_filter_lpdf
 export run_custom_mcmc_analysis, generate_custom_particle
 
 #### DSS-POMPs ####
@@ -296,7 +296,6 @@ function run_ibis_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; al
         return run_mbp_ibis(mdl, theta_init, ess_rs_crit, n_props, ind_prop, alpha)
     end
 end
-
 
 #### ARQ-MCMC ####
 

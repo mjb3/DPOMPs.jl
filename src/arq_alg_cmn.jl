@@ -49,9 +49,15 @@ const N_ADAPT_PERIODS = 100     # adaptive mh mcmc (parameterise?)
 
 ## adapts jump weights
 function adapt_jw!(j_w::StatsBase.ProbabilityWeights, lar_j::Int64, j::Int64, mc_accepted::BitArray{1}, a_h::Int64, i::Int64, tgt_ar::Float64, mc_idx::Array{Int64,2})
+    # if (j == Q_J_MIN && sum(mc_accepted[(i + 1 - a_h):i]) == 0)
     if (j == Q_J_MIN && sum(mc_accepted[(i + 1 - a_h):i]) == 0)
-        C_DEBUG && print(" *LAR*")
-        j = lar_j
+        if (i > (2 * a_h) && sum(mc_accepted[1:i]) == 1)
+            C_DEBUG && print(" *LAR - contingency j invoked*")
+            j = C_DF_ARQ_CJ
+        else
+            C_DEBUG && print(" *LAR*")
+            j = lar_j
+        end
     else    # adjust max jump size based on acceptance rate
         j += ((sum(mc_accepted[(i + 1 - a_h):i]) / a_h) > tgt_ar ? 1 : -1)
         j = max(j, Q_J_MIN)
@@ -88,32 +94,21 @@ end
 ## initialise inner ARQ MCMC
 macro init_inner_mcmc()
       esc(quote
-      ## adaption interval
-      a_h::Int64 = max(steps / N_ADAPT_PERIODS, 100)
       ## adaptive stuff
+      a_h::Int64 = max(steps / N_ADAPT_PERIODS, 100)    # interval
       j::Int64 = round(Q_JUMP * model.sample_resolution * length(theta_i))
       j_w = StatsBase.ProbabilityWeights(ones(length(theta_i)))
+
       ## declare results
       mc_idx = Array{Int64, 2}(undef, length(theta_i), steps)
-      # mc = Array{Float64, 2}(undef, steps, length(theta_init))
-      # mc_log_like = Array{Float64,1}(undef, steps)
       mc_accepted = falses(steps)
-      mc_fx = zeros(Int16, steps)   # process run
-      # mc_time = zeros(UInt64, steps)
-      # DEBUG (TO BE REMOVED):
-      # mcf = Array{Float64, 2}(undef, length(theta_i), steps)
-      ## theta index (i.e. grid key)
-      ## first sample
-      mc_idx[:,1] .= theta_i
-      mc_accepted[1] = true
-
+      mc_fx = ones(Int64, 1)   # process run
       ## estimate x0
       xi = get_grid_point!(grid, theta_i, model, true)
+
       ## write first sample and run the Markov chain:
       samples[:,1,mc] .= xi.result.sample
-      # mcf[:,1] .= xi.result.sample
-      # mc_log_like[1] = xi.result.log_likelihood
-      mc_fx[1] = xi.process_run
-      # mc_time[1] = time_ns()
+      mc_idx[:,1] .= theta_i
+      mc_accepted[1] = true
       end)
 end

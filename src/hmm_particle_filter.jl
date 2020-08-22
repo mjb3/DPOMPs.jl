@@ -78,7 +78,7 @@ function estimate_likelihood(model::HiddenMarkovModel, parameters::Array{Float64
 end
 
 ## generate pdf function
-function get_log_pdf_fn(mdl::HiddenMarkovModel, p::Int64 = 200, rs_type::Int64 = 1; essc::Float64 = 0.3)
+function get_log_pdf_fn(mdl::HiddenMarkovModel, p::Int64 = C_DF_PF_P, rs_type::Int64 = 1; essc::Float64 = C_DF_ESS_CRIT)
     if rs_type == 2                 ## resampler
         fn_rs = rsp_stratified      # Kitagawa (1996)
     elseif rs_type == 3

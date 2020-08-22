@@ -10,7 +10,6 @@ The only input parameter required is `x` of type `SimResults`, i.e. from a call 
 function plot_trajectory(x::SimResults)
     ## collect time and population
     t = zeros(length(x.particle.trajectory) + 1)
-    # pop = x.population
     pop = zeros(Int64, length(x.particle.trajectory) + 1, length(x.particle.initial_condition))
     pop[1,:] .= x.particle.initial_condition
     for i in eachindex(x.particle.trajectory)
@@ -40,7 +39,8 @@ Trace plot of samples from `n` MCMC analyses for a given model `parameter` using
 """
 function plot_parameter_trace(sample::RejectionSample, parameter::Int64)
     x = 1:size(sample.theta, 2)
-    p = UnicodePlots.lineplot(x, sample.theta[parameter,:,1], title = string("θ", Char(8320 + parameter), " traceplot."))
+    yl = [floor(minimum(sample.theta[parameter,:,:]), sigdigits = C_PR_SIGDIG), ceil(maximum(sample.theta[parameter,:,:]), sigdigits = C_PR_SIGDIG)]
+    p = UnicodePlots.lineplot(x, sample.theta[parameter,:,1], title = string("θ", Char(8320 + parameter), " traceplot."), ylim = yl)
     for i in 2:size(sample.theta, 3)
         UnicodePlots.lineplot!(p, sample.theta[parameter,:,i])
     end
@@ -72,8 +72,7 @@ Plot the marginal distribution of samples from an MCMC analysis for a given mode
 
 """
 function plot_parameter_marginal(sample::RejectionSample, parameter::Int64, adapt_period::Int64, nbins::Int64)
-    x = sample.theta[parameter, (adapt_period+1):size(sample.theta, 2), :]
-    x = reshape(x, length(x))
+    x = vec(sample.theta[parameter, (adapt_period+1):size(sample.theta, 2), :])
     p = UnicodePlots.histogram(x, nbins = nbins)
     UnicodePlots.ylabel!(p, string("θ", Char(8320 + parameter)))
     UnicodePlots.xlabel!(p, "samples")
@@ -91,17 +90,11 @@ function plot_parameter_marginal(sample::ImportanceSample, parameter::Int64; nbi
     return plot_parameter_marginal(rs, parameter, 0, nbins)
 end
 
-function plot_parameter_marginal(sample::ARQMCMCSample, parameter::Int64; nbins = sample.sample_resolution, use_is::Bool = false)
-    use_is && (return plot_parameter_marginal(sample.imp_sample, parameter))
-    # sample.samples.theta[:,end,1] .= sample.grid_range[:,1]        # HACK
-    # sample.samples.theta[:,end,end] .= (sample.grid_range[:,2] .- C_INF_DELTA)
-    p = plot_parameter_marginal(sample.samples, parameter, sample.adapt_period, nbins)
-    return p
-    # x = sample.samples.theta[parameter, (sample.adapt_period+1):size(sample.samples.theta, 2), :]
-    # x = reshape(x, length(x))
-    # p = UnicodePlots.histogram(x, nbins = sample.sample_resolution)#, colorbar_lim = sample.grid_range[parameter,:]
-    # UnicodePlots.ylabel!(p, string("θ", Char(8320 + parameter)))
-    # UnicodePlots.xlabel!(p, "samples")
+function plot_parameter_marginal(sample::ARQMCMCSample, parameter::Int64; use_is::Bool = false)
+    x = use_is ? resample_is(sample.imp_sample) : sample.samples
+    xx =  use_is ? x.theta[parameter,:,:] : x.theta[parameter, (sample.adapt_period+1):size(x.theta, 2), :]
+    nbins = Int(round((maximum(xx) - minimum(xx)) / sample.sample_interval[parameter]))
+    return plot_parameter_marginal(x, parameter, use_is ? 0 : sample.adapt_period, nbins)
 end
 
 
@@ -140,9 +133,7 @@ end
 ## ARQ
 function plot_parameter_heatmap(sample::ARQMCMCSample, x_parameter::Int64, y_parameter::Int64; use_is::Bool = false)
     use_is && (return plot_parameter_heatmap(sample.imp_sample, x_parameter, y_parameter))
-    p = plot_parameter_heatmap(sample.samples, x_parameter, y_parameter, sample.adapt_period)
-    # UnicodePlots.xaxis!(p, sample.grid_range[x_parameter,:])
-    return p
+    return plot_parameter_heatmap(sample.samples, x_parameter, y_parameter, sample.adapt_period)
 end
 
 ## model evidence comparison

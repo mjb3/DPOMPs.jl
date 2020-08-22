@@ -14,7 +14,7 @@ function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, b
         print(" initialising chain ", i)
         ## choose initial theta coords
         theta_init = rand(1:mdl.sample_resolution, n_theta)
-        C_DEBUG && print(": θ ~ ", round.(get_theta_val(mdl, theta_init, 0.0); sigdigits = C_PR_SIGDIG + 1))
+        C_DEBUG && print(": θ ~ ", round.(get_theta_val(mdl, theta_init); sigdigits = C_PR_SIGDIG + 1))
         ## run inner MCMC using designated function
         mcmc = arq_met_hastings!(samples, i, grid, mdl, steps, burnin, theta_init, tgt_ar)
         println(" - complete (calls to f(θ) := ", mcmc[1], "; AAR := ", round(mcmc[3] * 100, digits = 1), "%)")
@@ -67,12 +67,22 @@ function run_arq_mcmc_analysis(model::ARQModel, priors::Array{Function,1}; sampl
     return output
 end
 
+function run_arq_mcmc_analysis(model::ARQModel, prior::Function; sample_resolution::Int64 = C_DF_ARQ_SR, sample_limit::Int64 = C_DF_ARQ_SL, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), n_chains::Int64 = C_DF_ARQ_MC, tgt_ar::Float64 = C_DF_ARQ_AR, jitter::Float64 = C_DF_ARQ_JT)
+    prs = Array{Function,1}(undef, 1)
+    prs[1] = prior
+    return run_arq_mcmc_analysis(model, prs; sample_resolution = sample_resolution, sample_limit = sample_limit, steps = steps, burnin = burnin, n_chains = n_chains, tgt_ar = tgt_ar, jitter = jitter)
+end
+
 function run_arq_mcmc_analysis(model::ARQModel, priors::Array{Distributions.Distribution,1}; sample_resolution::Int64 = C_DF_ARQ_SR, sample_limit::Int64 = C_DF_ARQ_SL, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), n_chains::Int64 = C_DF_ARQ_MC, tgt_ar::Float64 = C_DF_ARQ_AR, jitter::Float64 = C_DF_ARQ_JT)
     pfn = Array{Function,1}(undef, length(priors))
     for i in eachindex(priors)
         pfn[i] = get_arq_prior(priors[i])
     end
-    run_arq_mcmc_analysis(model, pfn; sample_resolution = sample_resolution, sample_limit = sample_limit, steps = steps, burnin = burnin, n_chains = n_chains, tgt_ar = tgt_ar, jitter = jitter)
+    return run_arq_mcmc_analysis(model, pfn; sample_resolution = sample_resolution, sample_limit = sample_limit, steps = steps, burnin = burnin, n_chains = n_chains, tgt_ar = tgt_ar, jitter = jitter)
+end
+
+function run_arq_mcmc_analysis(model::ARQModel, prior::Distributions.Distribution; sample_resolution::Int64 = C_DF_ARQ_SR, sample_limit::Int64 = C_DF_ARQ_SL, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), n_chains::Int64 = C_DF_ARQ_MC, tgt_ar::Float64 = C_DF_ARQ_AR, jitter::Float64 = C_DF_ARQ_JT)
+    return run_arq_mcmc_analysis(model, [prior]; sample_resolution = sample_resolution, sample_limit = sample_limit, steps = steps, burnin = burnin, n_chains = n_chains, tgt_ar = tgt_ar, jitter = jitter)
 end
 
 function run_arq_mcmc_analysis(model::ARQModel; sample_resolution::Int64 = C_DF_ARQ_SR, sample_limit::Int64 = C_DF_ARQ_SL, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), n_chains::Int64 = C_DF_ARQ_MC, tgt_ar::Float64 = C_DF_ARQ_AR, jitter::Float64 = C_DF_ARQ_JT)
@@ -97,7 +107,7 @@ Run ARQMCMC analysis with `chains` Markov chains, where `n_chains > 1` the Gelma
 **Parameters**
 - `model`               -- `DPOMPModel` (see docs.)
 - `obs_data`            -- `Observations` data.
-- `sample_interval`     -- An array specifying the (fixed or fuzzy) interval.
+- `sample_interval`     -- An array specifying the (fixed or fuzzy) interval between samples.
 
 **Optional**
 - `sample_resolution`   -- i.e. the length of each dimension in the importance sample.

@@ -16,6 +16,7 @@ DPOMPModel
 Particle
 Event
 Observation
+ARQModel
 ```
 
 ### Results
@@ -41,7 +42,7 @@ partial_gaussian_obs_model
 gillespie_sim
 ```
 
-### Bayesian parameter inference
+### Bayesian inference
 
 ```@docs
 run_mcmc_analysis
@@ -60,6 +61,7 @@ run_model_comparison_analysis
 get_observations
 tabulate_results
 print_results
+get_particle_filter_lpdf
 ```
 
 ### Visualisation

@@ -3,11 +3,11 @@
 """
     ARQModel
 
+Contains the PDF (or estimate, or approximation of the target density - a function) and parameter density, which together specify the model.
+
 **Fields**
 - `pdf`         -- prior density function.
-- `grid_range`  -- matrix representing the upper and lower limits of the parameter space.
-
-A `struct` which includes the PDF (or estimate, or approximation of the target density - a function) and parameter space which specify the model.
+- `sample_interval`     -- An array specifying the (fixed or fuzzy) interval between samples.
 """
 struct ARQModel{PFT<:Function}
     pdf::PFT
