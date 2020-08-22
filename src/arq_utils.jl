@@ -3,7 +3,7 @@
 ### compute importance sample mean
 
 ## collect theta and weights
-function collect_theta_weight(grid::Dict{Any,Any}, np::Int64)
+function collect_theta_weight(grid::Dict{Array{Int64, 1}, GridPoint}, np::Int64)
     theta = zeros(np, length(grid))
     w = zeros(length(grid))
     for (index, value) in enumerate(grid)

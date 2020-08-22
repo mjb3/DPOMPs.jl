@@ -220,7 +220,8 @@ struct ARQMCMCSample
     adapt_period::Int64
     #     jitter::Float64
     sre::Array{Float64,2}
-    run_time::UInt64 # redundant
+    run_time::UInt64
+    fx::Int64
 end
 
 """

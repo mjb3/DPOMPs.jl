@@ -42,15 +42,12 @@ end
 
 ## run standard inner MCMC procedure and return results
 function arq_met_hastings!(samples::Array{Float64,3}, mc::Int64, grid::Dict, model::LikelihoodModel, steps::Int64, adapt_period::Int64, theta_i::Array{Int64, 1}, tgt_ar::Float64) #, prop_type::Int64
-    C_LAR_J_MP = 0.2                                # low AR contingency values
-    lar_j::Int64 = round(C_LAR_J_MP * model.sample_resolution * length(theta_i))
     @init_inner_mcmc                                # initialise inner MCMC
-    C_DEBUG && print("- mc", mc, " initialised ")
     for i in 2:steps
         theta_f = get_theta_f(theta_i, j_w, j, 1)   # propose new theta
         ## get log likelihood
         xf = get_grid_point!(grid, theta_f, model, i < a_h) # limit sample (n=1) for first interval only
-        xf.process_run && (mc_fx[1] += 1)
+        xf.process_run && (mc_fx[2] += 1)
         ## mh step
         mh_prob = exp(xf.prior - xi.prior + xf.result.log_likelihood - xi.result.log_likelihood)
         if mh_prob > 1.0            # accept or reject
@@ -71,7 +68,7 @@ function arq_met_hastings!(samples::Array{Float64,3}, mc::Int64, grid::Dict, mod
                 if sum(mc_accepted[(i - Q_REJECT_TRIGGER):i]) == 0
                     # C_DEBUG && println(" warning: refresh triggered on chain #", mc)
                     xi = get_grid_point!(grid, theta_i, model, false)
-                    xi.process_run && (mc_fx[1] += 1)
+                    xi.process_run && (mc_fx[3] += 1)
                 end
             end
         end     ## end of acceptance handling
@@ -83,8 +80,8 @@ function arq_met_hastings!(samples::Array{Float64,3}, mc::Int64, grid::Dict, mod
         print("- mc", mc, " processing -> ")
         ## compute mean/var and return results
         mc_m_cv = compute_chain_mean_covar(samples, mc, adapt_period, steps)
-        C_DEBUG && print("- mcv := ", mc_m_cv, " ")
+        C_DEBUG && print(" mcv := ", mc_m_cv, "; fx := ", mc_fx, " ")
     end
     ## compute SMC runs and return metadata
-    return (mc_fx[1], sum(mc_accepted) / steps, sum(mc_accepted[(adapt_period+1):steps]) / (steps - adapt_period))
+    return (sum(mc_fx), sum(mc_accepted) / steps, sum(mc_accepted[(adapt_period+1):steps]) / (steps - adapt_period))
 end

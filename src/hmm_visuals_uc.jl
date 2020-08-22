@@ -119,6 +119,10 @@ function plot_parameter_heatmap(sample::RejectionSample, x_parameter::Int64, y_p
     return p
 end
 
+# function get_df_lim(theta::Array{Float64,3}, p::Int64)
+#     return [floor(minimum(theta[p,:,:]), sigdigits = 1), ceil(maximum(theta[p,:,:]), sigdigits = 1)]
+# end
+
 ## MCMC
 function plot_parameter_heatmap(sample::MCMCSample, x_parameter::Int64, y_parameter::Int64)
     return plot_parameter_heatmap(sample.samples, x_parameter, y_parameter, sample.adapt_period)

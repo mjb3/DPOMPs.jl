@@ -165,7 +165,7 @@ function print_results(results::ImportanceSample, dpath::String)
     isdir(dpath) || mkpath(dpath)
     # print metadata
     open(string(dpath, "metadata.csv"), "w") do f
-        write(f, "st,n,run_time,bme\nis,$(length(results.mu)),$(results.run_time),$(results.bme[1])")
+        write(f, "alg,np,run_time,bme\nibis,$(length(results.mu)),$(results.run_time),$(results.bme[1])")
     end
     ##
     print_imp_sample(results, dpath)
@@ -173,24 +173,19 @@ end
 
 ## print arq mcmc results
 function print_results(results::ARQMCMCSample, dpath::String)
-    ## check dir
-    isdir(dpath) || mkpath(dpath)
-    ## print metadata
-    open(string(dpath, "metadata.csv"), "w") do f
-        write(f, "n,adapt_period,sample_resolution,run_time,bme\narq,")
-        write(f, "$(length(results.imp_sample.mu)),$(results.adapt_period),$(results.sample_resolution),$(results.run_time),$(results.imp_sample.bme[1])")
+    isdir(dpath) || mkpath(dpath)                       # check dir
+    open(string(dpath, "metadata.csv"), "w") do f       # print metadata
+        write(f, "alg,np,adapt_period,sample_limit,sample_resolution,run_time,fx,bme\narq,")
+        write(f, "$(length(results.imp_sample.mu)),$(results.adapt_period),$(results.sample_limit),$(results.sample_resolution),$(results.run_time),$(results.fx),$(results.imp_sample.bme[1])")
     end
-    ## print grid range
-    open(string(dpath, "sinterval.csv"), "w") do f
+    open(string(dpath, "sinterval.csv"), "w") do f      # print grid range
         write(f, "h")
         for i in eachindex(results.sample_interval)
             write(f, "\n$(results.sample_interval[i])")
         end
     end
-    ## print importance sample
-    print_imp_sample(results.imp_sample, dpath)
-    # print MCMC resamples
-    print_rej_sample(results.samples, dpath, results.sre)
+    print_imp_sample(results.imp_sample, dpath)         # print importance sample
+    print_rej_sample(results.samples, dpath, results.sre)   # print MCMC resamples
 end
 
 ## print MCMC sample
@@ -199,7 +194,7 @@ function print_results(results::MCMCSample, dpath::String)
     isdir(dpath) || mkpath(dpath)
     # print metadata
     open(string(dpath, "metadata.csv"), "w") do f
-        write(f, "st,n,adapt_period,run_time\nmcmc,")
+        write(f, "alg,np,adapt_period,run_time\nmcmc,")
         write(f, "$(length(results.samples.mu)),$(results.adapt_period),$(results.run_time)")
     end
     # print rejection/re samples

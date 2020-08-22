@@ -46,20 +46,22 @@ end
 const Q_JUMP = 0.1              # initial = Q_JUMP * grid res * NP
 const Q_J_MIN = 2
 const N_ADAPT_PERIODS = 100     # adaptive mh mcmc (parameterise?)
+const C_DF_ARQ_CJ = 10          # contingency jumps
 
 ## adapts jump weights
 function adapt_jw!(j_w::StatsBase.ProbabilityWeights, lar_j::Int64, j::Int64, mc_accepted::BitArray{1}, a_h::Int64, i::Int64, tgt_ar::Float64, mc_idx::Array{Int64,2})
     # if (j == Q_J_MIN && sum(mc_accepted[(i + 1 - a_h):i]) == 0)
     if (j == Q_J_MIN && sum(mc_accepted[(i + 1 - a_h):i]) == 0)
-        if (i > (2 * a_h) && sum(mc_accepted[1:i]) == 1)
+        if sum(mc_accepted[1:i]) == 1
             C_DEBUG && print(" *LAR - contingency j invoked*")
-            j = C_DF_ARQ_CJ
+            j = round(C_DF_ARQ_CJ * (i / a_h))
         else
             C_DEBUG && print(" *LAR*")
             j = lar_j
         end
     else    # adjust max jump size based on acceptance rate
-        j += ((sum(mc_accepted[(i + 1 - a_h):i]) / a_h) > tgt_ar ? 1 : -1)
+        # j += ((sum(mc_accepted[(i + 1 - a_h):i]) / a_h) > tgt_ar ? 1 : -1)
+        j = round(j * ((sum(mc_accepted[(i + 1 - a_h):i]) / a_h) / tgt_ar))
         j = max(j, Q_J_MIN)
     end
     ## tune var
@@ -80,14 +82,13 @@ end
 ## compute mean and covar matrix for a single chain
 # pass mean?
 function compute_chain_mean_covar(samples::Array{Float64, 3}, mc::Int64, adapt_period::Int64, steps::Int64)
-    C_DEBUG && println(" - SS := ", size(samples))
+    # C_DEBUG && println(" - SS := ", size(samples))
     adapted = (adapt_period + 1):steps
     mc_bar = zeros(size(samples, 1))
     for i in eachindex(mc_bar)
         mc_bar[i] = Statistics.mean(samples[i, adapted, mc])
     end
     scv = Statistics.cov(transpose(samples[:, adapted, mc]))
-    C_DEBUG && print(" - scv := ", scv)
     return (mc_bar, scv)
 end
 
@@ -95,6 +96,8 @@ end
 macro init_inner_mcmc()
       esc(quote
       ## adaptive stuff
+      C_LAR_J_MP = 0.2                                # low AR contingency values
+      lar_j::Int64 = round(C_LAR_J_MP * model.sample_resolution * length(theta_i))
       a_h::Int64 = max(steps / N_ADAPT_PERIODS, 100)    # interval
       j::Int64 = round(Q_JUMP * model.sample_resolution * length(theta_i))
       j_w = StatsBase.ProbabilityWeights(ones(length(theta_i)))
@@ -102,13 +105,15 @@ macro init_inner_mcmc()
       ## declare results
       mc_idx = Array{Int64, 2}(undef, length(theta_i), steps)
       mc_accepted = falses(steps)
-      mc_fx = ones(Int64, 1)   # process run
+      mc_fx = zeros(Int64, 3)   # process run
       ## estimate x0
       xi = get_grid_point!(grid, theta_i, model, true)
+      xi.process_run && (mc_fx[1] += 1)
 
       ## write first sample and run the Markov chain:
       samples[:,1,mc] .= xi.result.sample
       mc_idx[:,1] .= theta_i
       mc_accepted[1] = true
+      C_DEBUG && print("- mc", mc, " initialised ")
       end)
 end

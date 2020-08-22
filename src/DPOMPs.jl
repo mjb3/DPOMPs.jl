@@ -30,7 +30,7 @@ import StatsBase
 import Random           # for bitrand() function in arq
 
 ### global constants
-const C_DEBUG = true
+const C_DEBUG = false
 const C_RT_UNITS = 1000000000
 const C_LBL_BME = "-ln p(y)"
 const C_ALG_NM_SMC2 = "SMC2"
@@ -55,8 +55,7 @@ const C_DF_MBPI_MUT = 3
 
 ## ARQ defaults
 const C_DF_ARQ_SL = 1       # sample limit
-const C_DF_ARQ_SR = 100     # inital sample distribution
-const C_DF_ARQ_CJ = 50      # contingency jumps
+const C_DF_ARQ_SR = 50      # inital sample distribution
 const C_DF_ARQ_MC = 5       # chains
 const C_DF_ARQ_AR = 0.33    # targeted AR
 const C_DF_ARQ_JT = 0.0     # jitter

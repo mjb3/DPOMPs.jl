@@ -1,5 +1,5 @@
 ## for internal use (called by public functions)
-function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, burnin::Int64, chains::Int64, tgt_ar::Float64, grid)#, retain_samples::Bool
+function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, burnin::Int64, chains::Int64, tgt_ar::Float64, grid::Dict{Array{Int64, 1}, GridPoint})
     ## for performance evaluation
     start_time = time_ns()
     ## designate inner MCMC function and results array
@@ -9,6 +9,7 @@ function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, b
     samples = zeros(n_theta, steps, chains)
     ## initialise importance sample
     is_uc = 0.0
+    fx::Int64 = 0
     ## run N chains
     for i in 1:chains
         print(" initialising chain ", i)
@@ -17,6 +18,7 @@ function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, b
         C_DEBUG && print(": θ ~ ", round.(get_theta_val(mdl, theta_init); sigdigits = C_PR_SIGDIG + 1))
         ## run inner MCMC using designated function
         mcmc = arq_met_hastings!(samples, i, grid, mdl, steps, burnin, theta_init, tgt_ar)
+        fx += mcmc[1]
         println(" - complete (calls to f(θ) := ", mcmc[1], "; AAR := ", round(mcmc[3] * 100, digits = 1), "%)")
     end
     ## compute scale reduction factor est.
@@ -29,9 +31,9 @@ function run_inner_mcmc_analysis(mdl::LikelihoodModel, da::Bool, steps::Int64, b
     # shared HMM fn:
     compute_is_mu_covar!(is_mu, cv, theta_w[1], theta_w[2])
     grsp = mdl.sample_resolution ^ n_theta
-    is_output = ImportanceSample(is_mu, cv, theta_w[1], theta_w[2], 0, [-log(sum(theta_w[2]) / (length(theta_w[2])^2)), -log(sum(theta_w[2]) / grsp)])
+    is_output = ImportanceSample(is_mu, cv, theta_w[1], theta_w[2], 0, [-log(sum(theta_w[2]) / length(theta_w[2])), -log(sum(theta_w[2]) / (length(theta_w[2]) ^ (1 / n_theta)))])
     ## return results
-    output = ARQMCMCSample(is_output, rejs, mdl.sample_interval, mdl.sample_limit, mdl.sample_resolution, burnin, sre, time_ns() - start_time)
+    output = ARQMCMCSample(is_output, rejs, mdl.sample_interval, mdl.sample_limit, mdl.sample_resolution, burnin, sre, time_ns() - start_time, fx)
     println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s. (Iμ = ", round.(is_output.mu; sigdigits = C_PR_SIGDIG), "; Rμ = ", round.(rejs.mu; sigdigits = C_PR_SIGDIG), "; BME = ", round.(output.imp_sample.bme[1]; sigdigits = C_PR_SIGDIG), ")")
     return output
 end
@@ -57,7 +59,7 @@ Run ARQMCMC analysis with `chains` Markov chains, where `n_chains > 1` the Gelma
 function run_arq_mcmc_analysis(model::ARQModel, priors::Array{Function,1}; sample_resolution::Int64 = C_DF_ARQ_SR, sample_limit::Int64 = C_DF_ARQ_SL, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), n_chains::Int64 = C_DF_ARQ_MC, tgt_ar::Float64 = C_DF_ARQ_AR, jitter::Float64 = C_DF_ARQ_JT)#, retain_samples::Bool = true
     output = []
     ## initialise importance sample
-    grid = Dict() # {Array{Int64, 1}, GridPoint}
+    grid = Dict{Array{Int64, 1}, GridPoint}()
     for i in eachindex(priors)
         println("Running: ARQMCMC analysis ",  length(priors) == 1 ? "" : string(i, " / ", length(priors)," -"), " (", n_chains, " x " , steps, " steps):")
         mdl = LikelihoodModel(model.pdf, model.sample_interval, sample_limit, sample_resolution, jitter, priors[i])
