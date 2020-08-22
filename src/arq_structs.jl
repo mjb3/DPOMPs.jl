@@ -11,34 +11,33 @@ A `struct` which includes the PDF (or estimate, or approximation of the target d
 """
 struct ARQModel{PFT<:Function}
     pdf::PFT
-    parameter_range::Array{Float64, 2}
+    # parameter_range::Array{Float64, 2}
+    sample_interval::Array{Float64,1}
 end
 
 ## augmented data model
-"""
-    DAQModel
-
-**Fields**
-- `pdf`         -- prior density function.
-- `grid_range`  -- matrix representing the upper and lower limits of the parameter space.
-
-Like `ARQModel` but for an augmented data model. The `pdf` has a signature like `pdf(xi::AugDataResult, theta::Array{Float64})` and must also return an `AugDataResult` (see the docs for further information).
-"""
-struct DAQModel{PFT<:Function, XFT<:Function}
-    pdf::PFT
-    generate_x0::XFT
-    parameter_range::Array{Float64, 2}
-end
+# """
+#     DAQModel
+#
+# **Fields**
+# - `pdf`         -- prior density function.
+# - `grid_range`  -- matrix representing the upper and lower limits of the parameter space.
+#
+# Like `ARQModel` but for an augmented data model. The `pdf` has a signature like `pdf(xi::AugDataResult, theta::Array{Float64})` and must also return an `AugDataResult` (see the docs for further information).
+# """
+# struct DAQModel{PFT<:Function, XFT<:Function}
+#     pdf::PFT
+#     generate_x0::XFT
+#     parameter_range::Array{Float64, 2}
+# end
 
 ## for internal use only
-# NEED TO MERGE ARQModel?
+# MERGE ARQModel?
 struct LikelihoodModel{PFT<:Function, PRT<:Function}
-    # model_name::String
     pdf::PFT
-    grid_range::Array{Float64, 2}
-    ## MOVE THESE TO algorithm functions?
-    sample_resolution::Int64
+    sample_interval::Array{Float64, 1}
     sample_limit::Int64
+    sample_resolution::Int64
     jitter::Float64
     prior::PRT
 end
@@ -57,11 +56,11 @@ struct GridSet
 end
 
 ## DA grid request
-struct DAGridRequest
-    set::GridSet
-    result::GridSample
-    delayed::Bool
-end
+# struct DAGridRequest
+#     set::GridSet
+#     result::GridSample
+#     delayed::Bool
+# end
 
 ## grid point (internal)
 struct GridPoint
@@ -74,6 +73,7 @@ end
 ## results for a density estimate (internal)
 struct GridRequest
     result::GridPoint
+    prior::Float64
     process_run::Bool
 end
 

@@ -69,76 +69,6 @@ function partial_log_likelihood!(pop::Array{Int64,2}, model::HiddenMarkovModel, 
     return output
 end
 
-##### IN DEVELOPMENT - NEED TO ADDRESS STABILITY
-# ## iterate particle and evaluate cumulative w = g(x)
-# function iterate_particles!(pop::Array{Int64,2}, gx::Array{Float64,1}, model::HiddenMarkovModel, obs_i::Int64, parameters::Array{Float64,1}, t::Float64, tmax::Float64)
-#     cum_rates = Array{Float64}(undef, model.n_events)
-#     # iterate each particle
-#     # total_weight = 0.0
-#     for p in eachindex(gx)
-#         # initialise some things
-#         time = t
-#         # - HACK ***************
-#         ptemp::Array{Int64,1} = pop[p,:]
-#         # sim
-#         while true
-#             model.rate_function(cum_rates, parameters, ptemp)
-#             cumsum!(cum_rates, cum_rates)
-#             cum_rates[end] == 0.0 && break          # 0 rate test
-#             time -= log(rand()) / cum_rates[end]
-#             time > tmax && break                # break if max time exceeded
-#             # else choose event type and update population
-#             ptemp .+= model.fn_transition(choose_event(cum_rates))
-#         end
-#         # update likelihood
-#         # total_weight += exp(model.obs_model(model.obs_data[obs_i], ptemp, parameters))
-#         # cum_weight[p] = total_weight
-#         gx[p] = exp(model.obs_model(model.obs_data[obs_i], ptemp, parameters))
-#         pop[p,:] .= ptemp
-#     end
-# end
-# function partial_log_likelihood!(pop::Array{Int64,2}, model::HiddenMarkovModel, parameters::Array{Float64, 1}, fn_rs::Function, ess_crit::Float64, ymin::Int64, ymax::Int64)
-#     ## initialise population matrix
-#     if ymin == 1
-#         for i in 1:size(pop, 1)
-#             pop[i,:] .= model.fn_initial_condition()
-#         end
-#         t_prev = model.t0_index == 0 ? 0.0 : parameters[model.t0_index]
-#     else
-#         t_prev = model.obs_data[ymin - 1].time
-#     end
-#     # - for use by resampler
-#     old_p = copy(pop)
-#     ## for each observation
-#     output = 0.0    # log likelihood
-#     weight = ones(size(pop,1)) # declare arrays for use by loop
-#     gx = zeros(size(pop,1))
-#     for obs_i in ymin:ymax
-#         # iterate each particle
-#         iterate_particles!(pop, gx, model, obs_i, parameters, t_prev, model.obs_data[obs_i].time)
-#         # update avg ll
-#         output += log(sum(weight .* gx) / sum(weight))
-#         # weight .= gx
-#         weight .*= gx                # update
-#         weight ./= (sum(weight))                          # normalise
-#         # resample particles (if < n, and rs = true)
-#         if (obs_i < length(model.obs_data) && model.obs_data[obs_i].resample)
-#             ## ADD ESS CRITERIA **********
-#             # if compute_ess(weight) < ess_crit
-#                 # update old p and resample
-#                 old_p .= pop
-#                 cumsum!(weight, weight)
-#                 fn_rs(pop, old_p, weight)
-#                 weight .= 1
-#             # end
-#         end
-#         # reset sim parameters
-#         t_prev = model.obs_data[obs_i].time
-#     end
-#     # return unbiased estimator of LOG likelihood
-#     return output
-# end
-
 ## estimate full LOG likelihood
 function estimate_likelihood(model::HiddenMarkovModel, parameters::Array{Float64,1}, particles::Int64, pop_size::Int64, fn_rs::Function, ess_crit::Float64)
     # , t0_index::Int64
@@ -148,27 +78,18 @@ function estimate_likelihood(model::HiddenMarkovModel, parameters::Array{Float64
 end
 
 ## generate pdf function
-function get_log_pdf_fn(mdl::HiddenMarkovModel, p::Int64 = 200, rs_type::Int64 = 1; essc::Float64 = 0.3, ppdf::Bool = false)
-    ## resampler
-    if rs_type == 2
+function get_log_pdf_fn(mdl::HiddenMarkovModel, p::Int64 = 200, rs_type::Int64 = 1; essc::Float64 = 0.3)
+    if rs_type == 2                 ## resampler
         fn_rs = rsp_stratified      # Kitagawa (1996)
     elseif rs_type == 3
         fn_rs = rsp_multinomial     # inverse CDF multinomial
     else
         fn_rs = rsp_systematic      # Carpenter (1999) - default
     end
-    ## population size
-    ps = length(mdl.fn_initial_condition())
+    ps = length(mdl.fn_initial_condition()) ## population size
     ## generate function and return
-    if ppdf
-        function comp_log_ppdf(parameters::Array{Float64, 1})
-            return Distributions.logpdf(mdl.prior, parameters) + estimate_likelihood(mdl, parameters, p, ps, fn_rs, essc)
-        end
-        return comp_log_ppdf
-    else
-        function comp_log_pdf(parameters::Array{Float64, 1})
-            return estimate_likelihood(mdl, parameters, p, ps, fn_rs, essc)
-        end
-        return comp_log_pdf
+    function comp_log_pdf(parameters::Array{Float64, 1})
+        return estimate_likelihood(mdl, parameters, p, ps, fn_rs, essc)
     end
+    return comp_log_pdf
 end

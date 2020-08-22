@@ -56,6 +56,8 @@ const C_DF_MBPI_MUT = 3
 ## ARQ
 const C_DF_ARQ_SR = 30
 const C_DF_ARQ_MC = 5
+const C_DF_ARQ_AR = 0.33
+const C_DF_ARQ_JT = 0.0
 
 df_adapt_period(steps::Int64) = Int64(floor(steps * C_DF_MCMC_ADAPT))
 default_arq_sl(grng::Array{Float64,2}) = size(grng, 1) > 2 ? 1 : 7

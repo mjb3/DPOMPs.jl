@@ -181,10 +181,10 @@ function print_results(results::ARQMCMCSample, dpath::String)
         write(f, "$(length(results.imp_sample.mu)),$(results.adapt_period),$(results.sample_resolution),$(results.run_time),$(results.imp_sample.bme[1])")
     end
     ## print grid range
-    open(string(dpath, "grng.csv"), "w") do f
-        write(f, "lower,upper")
-        for i in 1:size(results.grid_range,1)
-            write(f, "\n$(results.grid_range[i,1]),$(results.grid_range[i,2])")
+    open(string(dpath, "sinterval.csv"), "w") do f
+        write(f, "h")
+        for i in eachindex(results.sample_interval)
+            write(f, "\n$(results.sample_interval[i])")
         end
     end
     ## print importance sample
@@ -260,8 +260,8 @@ end
 
 ## arq mcmc analysis:
 function tabulate_results(results::ARQMCMCSample)
-    h = ["θ", "Iμ", "Iσ", "Rμ", "Rσ", "SRE", "SRE975", C_LBL_BME]
-    d = Matrix(undef, length(results.imp_sample.mu), 8)
+    h = ["θ", "Iμ", "Iσ", "Rμ", "Rσ", "SRE", "SRE975"]#, C_LBL_BME
+    d = Matrix(undef, length(results.imp_sample.mu), 7)
     is_sd = compute_sigma(results.imp_sample.cv)
     rj_sd = compute_sigma(results.samples.cv)
     d[:,1] .= 1:length(results.imp_sample.mu)
@@ -271,9 +271,9 @@ function tabulate_results(results::ARQMCMCSample)
     d[:,5] .= round.(rj_sd; sigdigits = C_PR_SIGDIG)
     d[:,6] .= round.(results.sre[:,2]; sigdigits = C_PR_SIGDIG)
     d[:,7] .= round.(results.sre[:,3]; sigdigits = C_PR_SIGDIG)
-    d[:,8] .= 0
-    bme_seq = C_DEBUG ? (1:2) : (1:1)
-    d[bme_seq,8] = round.(results.imp_sample.bme[bme_seq]; digits = 1)
+    # d[:,8] .= 0
+    # bme_seq = C_DEBUG ? (1:2) : (1:1)
+    # d[bme_seq,8] = round.(results.imp_sample.bme[bme_seq]; digits = 1)
     PrettyTables.pretty_table(d, h)
 end
 

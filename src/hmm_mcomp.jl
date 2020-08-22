@@ -1,8 +1,4 @@
 ## model comparison
-# TO DO:
-# - breakout HMM option *************
-# - plug ARQ option in (sep function call)
-# - various algorithm options
 
 function run_model_comparison_analysis(models::Array{HiddenMarkovModel, 1}, n_runs::Int64, fn_algorithm::Function)
     ## run analysis
@@ -39,7 +35,7 @@ Returns an object of type `ModelComparisonResults`, which includes the mean and 
 
 **Optional parameters**
 - `n_runs`          -- number of independent analyses used to estimate the BME for each model.
-- `algorithm`       -- `String` representing the inference method used for the analysis, `"SMC2"` for **SMC^2** (default); `"MBPI"` for *MBP-IBIS*; or "ARQ".
+- `algorithm`       -- `String` representing the inference method used for the analysis, `"SMC2"` for **SMC^2** (default); or `"MBPI"` for *MBP-IBIS*.
 
 **Optional inference algorithm parameters**
 - `np`              -- number of [outer, i.e. theta] particles used in IBIS procedures (doesn't apply to ARQ-MCMC.)
@@ -71,10 +67,8 @@ function run_model_comparison_analysis(models::Array{DPOMPModel, 1}, y::Array{Ob
         theta_init = rand(mdl.prior, np)
         return run_mbp_ibis(mdl, theta_init, ess_rs_crit, n_props, false, C_ACCEPTANCE_ALPHA, false)
     end
-    # function alg_arq(mdl::HiddenMarkovModel)    # WIP
-    #     run_arq_mcmc_analysis(mdl, theta_range::Array{Float64,2}; sample_resolution::Int64 = 30, sample_limit::Int64 = 3, n_chains::Int64 = 5, steps::Int64 = C_DF_MCMC_STEPS, burnin::Int64 = df_adapt_period(steps), tgt_ar::Float64 = 0.33, np::Int64 = 200, ess_crit = 0.3)
-    # end
 
+    ##
     if algorithm == C_ALG_NM_SMC2
         inf_alg = alg_smc2
     elseif (SubString(algorithm, 1, 4) == C_ALG_NM_MBPI || algorithm == "MIBIS")
@@ -91,20 +85,4 @@ function run_model_comparison_analysis(models::Array{DPOMPModel, 1}, y::Array{Ob
     end
     ## run analysis
     return run_model_comparison_analysis(hmm, n_runs, inf_alg)
-    # bme = zeros(n_runs, length(models))
-    # mnames = String[]
-    # start_time = time_ns()
-    # for m in eachindex(models)
-    #     mdl = get_private_model(models[m], y)
-    #     println(" processing model m", m, ": ", mdl.model_name)
-    #     for n in 1:n_runs
-    #         print("  analysis ", n, " ")
-    #         bme[n, m] = inf_alg(mdl)
-    #     end
-    #     push!(mnames, mdl.model_name)
-    # end
-    # ## process results
-    # output = ModelComparisonResults(mnames, bme, vec(Statistics.mean(bme; dims = 1)), vec(Statistics.std(bme; dims = 1)), n_runs, time_ns() - start_time)
-    # println("Analysis complete (total runtime := ", Int64(round(output.run_time / C_RT_UNITS)), "s)")
-    # return output
 end

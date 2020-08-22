@@ -214,11 +214,11 @@ The `sre` scale factor reduction estimates relate the rejection (re)samples to t
 struct ARQMCMCSample
     imp_sample::ImportanceSample
     samples::RejectionSample
-    adapt_period::Int64
-    sample_resolution::Int64
+    sample_interval::Array{Float64,1}
     sample_limit::Int64
+    sample_resolution::Int64
+    adapt_period::Int64
     #     jitter::Float64
-    grid_range::Array{Float64,2}
     sre::Array{Float64,2}
     run_time::UInt64 # redundant
 end

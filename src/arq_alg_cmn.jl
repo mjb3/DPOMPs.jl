@@ -1,17 +1,18 @@
 ### common algorithm stuffs
 
-## new prior functions
-function get_df_arq_prior(theta_range::Array{Float64,2})
+## new default prior: partially unbounded
+function get_df_arq_prior()
     function arq_prior(theta::Array{Float64,1})
         for i in eachindex(theta)
-            theta[i] < theta_range[i, 1] && return -Inf
-            theta[i] > theta_range[i, 2] && return -Inf
+            theta[i] < 0.0 && return -Inf
+        #     theta[i] > theta_range[i, 2] && return -Inf
         end
         return 0.0
     end
     return arq_prior
 end
 
+## new prior functions
 function get_arq_prior(priord::Distributions.Distribution)
     function arq_prior(theta::Array{Float64,1})
         return Distributions.logpdf(priord, theta)
@@ -20,20 +21,29 @@ function get_arq_prior(priord::Distributions.Distribution)
 end
 
 ## 'prior'
-function validate_theta(theta::Array{Int64, 1}, max_idx::Int64)
-    for i in eachindex(theta)
-        (theta[i] < 1 || theta[i] > max_idx) && (return false)
-    end
-    return true
-end
+# function validate_theta(theta::Array{Int64, 1}, max_idx::Int64)
+#     for i in eachindex(theta)
+#         (theta[i] < 1 || theta[i] > max_idx) && (return false)
+#     end
+#     return true
+# end
 
-## get theta value from index
-function get_theta_val(model::LikelihoodModel, theta::Array{Int64, 1}, jitter = model.jitter)
+## get theta value from index ## UPDATE THIS
+# function get_theta_val(model::LikelihoodModel, theta::Array{Int64, 1}, jitter = model.jitter)
+#     output = zeros(Float64, length(theta))
+#     for i in eachindex(theta)
+#         gap = (model.grid_range[i, 2] - model.grid_range[i, 1]) / model.sample_resolution
+#         output[i] = model.grid_range[i, 1] + ((theta[i] - 0.5) * gap)
+#         jitter > 0.0 && (output[i] += (((rand() * 2) - 1) * jitter * gap))
+#     end
+#     return output
+# end
+## UPDATE FOR OFFSETS **********
+function get_theta_val(model::LikelihoodModel, theta::Array{Int64, 1})
     output = zeros(Float64, length(theta))
     for i in eachindex(theta)
-        gap = (model.grid_range[i, 2] - model.grid_range[i, 1]) / model.sample_resolution
-        output[i] = model.grid_range[i, 1] + ((theta[i] - 0.5) * gap)
-        jitter > 0.0 && (output[i] += (((rand() * 2) - 1) * jitter * gap))
+        output[i] = (theta[i] - 0.5) * model.sample_interval[i]
+        model.jitter > 0.0 && (output[i] += (((rand() * 2) - 1) * model.jitter * model.sample_interval[i]))
     end
     return output
 end
@@ -61,8 +71,7 @@ function adapt_jw!(j_w::StatsBase.ProbabilityWeights, lar_j::Int64, j::Int64, mc
     if (j == Q_J_MIN && sum(mc_accepted[(i + 1 - a_h):i]) == 0)
         C_DEBUG && print(" *LAR*")
         j = lar_j
-    else
-        # adjust max jump size based on acceptance rate
+    else    # adjust max jump size based on acceptance rate
         j += ((sum(mc_accepted[(i + 1 - a_h):i]) / a_h) > tgt_ar ? 1 : -1)
         j = max(j, Q_J_MIN)
     end
@@ -106,24 +115,24 @@ macro init_inner_mcmc()
       ## declare results
       mc_idx = Array{Int64, 2}(undef, length(theta_i), steps)
       # mc = Array{Float64, 2}(undef, steps, length(theta_init))
-      mc_log_like = Array{Float64,1}(undef, steps)
+      # mc_log_like = Array{Float64,1}(undef, steps)
       mc_accepted = falses(steps)
-      mc_time = zeros(UInt64, steps)
+      mc_fx = zeros(Int16, steps)   # process run
+      # mc_time = zeros(UInt64, steps)
       # DEBUG (TO BE REMOVED):
-      mcf = Array{Float64, 2}(undef, length(theta_i), steps)
+      # mcf = Array{Float64, 2}(undef, length(theta_i), steps)
       ## theta index (i.e. grid key)
       ## first sample
       mc_idx[:,1] .= theta_i
       mc_accepted[1] = true
-      mc_fx = zeros(Int16, steps)   # process run
 
       ## estimate x0
       xi = get_grid_point!(grid, theta_i, model, true)
       ## write first sample and run the Markov chain:
       samples[:,1,mc] .= xi.result.sample
-      mcf[:,1] .= xi.result.sample
-      mc_log_like[1] = xi.result.log_likelihood
+      # mcf[:,1] .= xi.result.sample
+      # mc_log_like[1] = xi.result.log_likelihood
       mc_fx[1] = xi.process_run
-      mc_time[1] = time_ns()
+      # mc_time[1] = time_ns()
       end)
 end
