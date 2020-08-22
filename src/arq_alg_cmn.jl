@@ -20,24 +20,6 @@ function get_arq_prior(priord::Distributions.Distribution)
     return arq_prior
 end
 
-## 'prior'
-# function validate_theta(theta::Array{Int64, 1}, max_idx::Int64)
-#     for i in eachindex(theta)
-#         (theta[i] < 1 || theta[i] > max_idx) && (return false)
-#     end
-#     return true
-# end
-
-## get theta value from index ## UPDATE THIS
-# function get_theta_val(model::LikelihoodModel, theta::Array{Int64, 1}, jitter = model.jitter)
-#     output = zeros(Float64, length(theta))
-#     for i in eachindex(theta)
-#         gap = (model.grid_range[i, 2] - model.grid_range[i, 1]) / model.sample_resolution
-#         output[i] = model.grid_range[i, 1] + ((theta[i] - 0.5) * gap)
-#         jitter > 0.0 && (output[i] += (((rand() * 2) - 1) * jitter * gap))
-#     end
-#     return output
-# end
 ## UPDATE FOR OFFSETS **********
 function get_theta_val(model::LikelihoodModel, theta::Array{Int64, 1})
     output = zeros(Float64, length(theta))
@@ -55,7 +37,6 @@ function get_theta_f(theta_i::Array{Int64, 1}, j_w::StatsBase.ProbabilityWeights
     while sum(abs.(output)) != d# determine
         p::Int64 = StatsBase.sample(j_w)
         output[p] += Random.bitrand()[1] ? 1 : -1
-        # sum(abs.(output)) == d && break
     end
     output .+= theta_i          # move
     return output

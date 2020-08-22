@@ -17,7 +17,7 @@ function run_model_comparison_analysis(models::Array{HiddenMarkovModel, 1}, n_ru
         push!(mnames, models[m].model_name)
     end
     ## process results
-    output = ModelComparisonResults(mnames, bme, log.(vec(Statistics.mean(exp.(bme); dims = 1))), vec(Statistics.std(bme; dims = 1)), n_runs, time_ns() - start_time, theta_mu)
+    output = ModelComparisonResults(mnames, bme, -log.(vec(Statistics.mean(exp.(-bme); dims = 1))), vec(Statistics.std(bme; dims = 1)), n_runs, time_ns() - start_time, theta_mu)
     println("Analysis complete (total runtime := ", Int64(round(output.run_time / C_RT_UNITS)), "s)")
     return output
 end

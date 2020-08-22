@@ -289,7 +289,7 @@ function resample_is(sample::ImportanceSample; n = 10000)
 end
 
 function compute_bayes_factor(ml::Array{Float64,1}, null_index::Int64)
-    output = exp.(ml)
+    output = exp.(-ml)
     output ./= output[1]
     return output
 end

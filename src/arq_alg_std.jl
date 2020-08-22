@@ -6,10 +6,10 @@ function get_grid_point!(grid, theta_i::Array{Int64, 1}, model::LikelihoodModel,
     ## check hashmap
     exists = haskey(grid, theta_i)
     if exists
-        # x = grid[theta_i]
-        visited = grid[theta_i].visited
-        sampled = grid[theta_i].sampled
-        theta_val = grid[theta_i].sample
+        x = grid[theta_i]
+        visited = x.visited
+        sampled = x.sampled
+        theta_val = x.sample
     else
         visited = 0
         sampled = 0

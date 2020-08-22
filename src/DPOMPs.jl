@@ -32,7 +32,7 @@ import Random           # for bitrand() function in arq
 ### global constants
 const C_DEBUG = false
 const C_RT_UNITS = 1000000000
-const C_LBL_BME = "ln p(y)"
+const C_LBL_BME = "-ln p(y)"
 const C_ALG_NM_SMC2 = "SMC2"
 const C_ALG_NM_MBPI = "MBPI"
 const C_INF_DELTA = 0.0000000000000001
@@ -54,13 +54,14 @@ const C_DF_MBPI_ESS_CRIT = 0.5
 const C_DF_MBPI_MUT = 3
 
 ## ARQ
+const C_DF_ARQ_SL = 1
 const C_DF_ARQ_SR = 30
 const C_DF_ARQ_MC = 5
 const C_DF_ARQ_AR = 0.33
 const C_DF_ARQ_JT = 0.0
 
 df_adapt_period(steps::Int64) = Int64(floor(steps * C_DF_MCMC_ADAPT))
-default_arq_sl(grng::Array{Float64,2}) = size(grng, 1) > 2 ? 1 : 7
+# default_arq_sl(grng::Array{Float64,2}) = size(grng, 1) > 2 ? 1 : 7
 
 ### public stuffs ###
 export DPOMPModel, Particle, Event, Observation

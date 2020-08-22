@@ -163,7 +163,7 @@ function plot_model_comparison(results::ModelComparisonResults, boxplot = false)
         if boxplot
             return UnicodePlots.boxplot(results.names, [results.bme[:, i] for i in 1:size(results.bme,2)], title = c_plot_title, xlabel = C_LBL_BME)
         else
-            return UnicodePlots.barplot(results.names, round.(-results.mu; digits = 1), title = c_plot_title, xlabel = string("-", C_LBL_BME))
+            return UnicodePlots.barplot(results.names, round.(results.mu; digits = 1), title = c_plot_title, xlabel = C_LBL_BME)
         end
     catch err
         println("ERROR: couldn't produce plot :=\n")
