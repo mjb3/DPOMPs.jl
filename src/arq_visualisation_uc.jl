@@ -22,3 +22,20 @@ function plot_autocorrelation(autocorrelation::AutocorrelationResults)
     UnicodePlots.ylabel!(p, "R")
     return p
 end
+
+function plot_parameter_trace(sample::ARQMCMCSample, parameter::Int64)
+    return plot_parameter_trace(sample.samples, parameter)
+end
+
+## ARQ
+function plot_parameter_heatmap(sample::ARQMCMCSample, x_parameter::Int64, y_parameter::Int64; use_is::Bool = false)
+    use_is && (return plot_parameter_heatmap(sample.imp_sample, x_parameter, y_parameter))
+    return plot_parameter_heatmap(sample.samples, x_parameter, y_parameter, sample.adapt_period)
+end
+
+function plot_parameter_marginal(sample::ARQMCMCSample, parameter::Int64; use_is::Bool = false)
+    x = use_is ? resample_is(sample.imp_sample) : sample.samples
+    xx =  use_is ? x.theta[parameter,:,:] : x.theta[parameter, (sample.adapt_period+1):size(x.theta, 2), :]
+    nbins = Int(round((maximum(xx) - minimum(xx)) / sample.sample_interval[parameter]))
+    return plot_parameter_marginal(x, parameter, use_is ? 0 : sample.adapt_period, nbins)
+end

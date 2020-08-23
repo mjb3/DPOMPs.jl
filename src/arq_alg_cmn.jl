@@ -60,7 +60,6 @@ function adapt_jw!(j_w::StatsBase.ProbabilityWeights, lar_j::Int64, j::Int64, mc
             j = lar_j
         end
     else    # adjust max jump size based on acceptance rate
-        # j += ((sum(mc_accepted[(i + 1 - a_h):i]) / a_h) > tgt_ar ? 1 : -1)
         j = round(j * ((sum(mc_accepted[(i + 1 - a_h):i]) / a_h) / tgt_ar))
         j = max(j, Q_J_MIN)
     end
@@ -97,18 +96,18 @@ macro init_inner_mcmc()
       esc(quote
       ## adaptive stuff
       C_LAR_J_MP = 0.2                                # low AR contingency values
-      lar_j::Int64 = round(C_LAR_J_MP * model.sample_resolution * length(theta_i))
+      lar_j::Int64 = round(C_LAR_J_MP * model.sample_dispersal * length(theta_i))
       a_h::Int64 = max(steps / N_ADAPT_PERIODS, 100)    # interval
-      j::Int64 = round(Q_JUMP * model.sample_resolution * length(theta_i))
+      j::Int64 = round(Q_JUMP * model.sample_dispersal * length(theta_i))
       j_w = StatsBase.ProbabilityWeights(ones(length(theta_i)))
 
       ## declare results
       mc_idx = Array{Int64, 2}(undef, length(theta_i), steps)
       mc_accepted = falses(steps)
-      mc_fx = zeros(Int64, 3)   # process run
+      # mc_fx = zeros(Int64, 3)   # process run
       ## estimate x0
-      xi = get_grid_point!(grid, theta_i, model, true)
-      xi.process_run && (mc_fx[1] += 1)
+      # xi = get_grid_point!(grid, theta_i, model, true)
+      # xi.process_run && (mc_fx[1] += 1)
 
       ## write first sample and run the Markov chain:
       samples[:,1,mc] .= xi.result.sample

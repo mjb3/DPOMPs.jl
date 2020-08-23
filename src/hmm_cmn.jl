@@ -1,5 +1,13 @@
 #### common functions ####
 
+## write time nicely
+function print_runtime(rt)
+    s = Int64(round(rt / C_RT_UNITS))
+    s > 600 && (return string(round(s / 60; digits = 1), " minutes"))
+    s > 120 && (return string(round(s / 60; digits = 2), " minutes"))
+    return string(s, " seconds")
+end
+
 ## choose event type
 function choose_event(cum_rates::Array{Float64,1})
     etc = rand() * cum_rates[end]

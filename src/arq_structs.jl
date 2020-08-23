@@ -37,23 +37,23 @@ struct LikelihoodModel{PFT<:Function, PRT<:Function}
     pdf::PFT
     sample_interval::Array{Float64, 1}
     sample_limit::Int64
-    sample_resolution::Int64
+    sample_dispersal::Int64
     jitter::Float64
     prior::PRT
 end
 
 ## DA grid sample
-struct GridSample
-    sample::Array{Float64, 1}   # i.e. theta
-    log_likelihood::Float64
-end
+# struct GridSample
+#     sample::Array{Float64, 1}   # i.e. theta
+#     log_likelihood::Float64
+# end
 
 ## DA grid 'value'
-struct GridSet
-    anchor::Array{Float64, 1}   # i.e. theta REQ'D? ***
-    samples::Array{GridSample, 1}
-    # log_likelihood::Float64     # i.e weighted density
-end
+# struct GridSet
+#     anchor::Array{Float64, 1}   # i.e. theta REQ'D? ***
+#     samples::Array{GridSample, 1}
+#     # log_likelihood::Float64     # i.e weighted density
+# end
 
 ## DA grid request
 # struct DAGridRequest
@@ -90,4 +90,37 @@ Results of a call to `compute_autocorrelation`.
 struct AutocorrelationResults
     lag::Array{Int64,1}
     autocorrelation::Array{Float64,2}
+end
+
+## ARQMCMC
+"""
+    ARQMCMCSample
+
+The results of an ARQ MCMC analysis including the ImportanceSample and resampled RejectionSample.
+
+The `sre` scale factor reduction estimates relate the rejection (re)samples to the underlying importance sample.
+
+**Fields**
+- `imp_sample`          -- main results, i.e. ImportanceSample.
+- `samples`             -- resamples, of type RejectionSample.
+- `adapt_period`        -- adaptation (i.e. 'burn in') period.
+- `sample_dispersal`    -- number of distinct [possible] sample values along each dimension in the unit cube.
+- `sample_limit`        -- maximum number of samples per theta tupple.
+- `grid_range`          -- bounds of the parameter space.
+- `sre`                 -- scale reduction factor estimate, i.e. Gelman diagnostic. NB. *only valid for resamples*.
+- `run_time`            -- application run time.
+- `sample_cache`        -- a link to the underlying likelihood cache - can be reused.
+"""
+struct ARQMCMCSample
+    imp_sample::ImportanceSample
+    samples::RejectionSample
+    sample_interval::Array{Float64,1}
+    sample_limit::Int64
+    sample_dispersal::Int64
+    adapt_period::Int64
+    #     jitter::Float64
+    sre::Array{Float64,2}
+    run_time::UInt64
+    fx::Int64
+    sample_cache::Dict{Array{Int64, 1}, GridPoint}
 end

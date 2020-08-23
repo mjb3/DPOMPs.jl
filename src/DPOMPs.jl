@@ -305,8 +305,7 @@ const C_ALG_DAUG  = "DAQ"
 
 ## structs
 include("arq_structs.jl")
-## visualisation tools
-include("arq_visualisation_uc.jl")
+
 ### algorithms
 ## common functions, macro
 include("arq_alg_cmn.jl")
@@ -318,7 +317,12 @@ include("arq_alg_std.jl")
 include("arq_alg_daug.jl")
 ## common functions, printing, etc
 include("arq_utils.jl")
+## visualisation tools
+include("arq_visualisation_uc.jl")
+
 ## main algorithms
 include("arq_main.jl")
+
+
 
 end # module

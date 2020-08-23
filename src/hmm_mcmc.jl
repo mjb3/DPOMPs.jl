@@ -292,7 +292,7 @@ macro mcmc_tidy_up()
     rejs = handle_rej_samples(samples, adapt_period)
     gd = gelman_diagnostic(samples, adapt_period)         # run convergence diagnostic
     output = MCMCSample(rejs, adapt_period, gd.sre, time_ns() - start_time)
-    println("- finished in ", Int64(round(output.run_time / C_RT_UNITS)), "s. E(x) := ", output.samples.mu)
+    println("- finished in ", print_runtime(output.run_time), ". E(x) := ", output.samples.mu)
     end)
 end
 

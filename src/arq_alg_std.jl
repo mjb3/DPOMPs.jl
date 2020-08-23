@@ -40,8 +40,24 @@ function get_grid_point!(grid, theta_i::Array{Int64, 1}, model::LikelihoodModel,
     end
 end
 
+## get intial parameter index and 'grid' sample - returns tuple(index, GridRequest)
+# NB. update for offsets ********
+function get_initial_sample(mdl::LikelihoodModel, grid::Dict{Array{Int64, 1}, GridPoint}, mc_fx::Array{Int64, 1}, sample_dispersal::Int64 = mdl.sample_dispersal)
+    theta_i = rand(1:sample_dispersal, length(mdl.sample_interval))     # choose initial theta coords
+    x0 = get_grid_point!(grid, theta_i, mdl, true)
+    x0.prior == -Inf && (return get_initial_sample(mdl, grid, mc_fx, sample_dispersal + 1))
+    x0.process_run && (mc_fx[1] += 1)
+    return (theta_i, x0)
+end
+
 ## run standard inner MCMC procedure and return results
-function arq_met_hastings!(samples::Array{Float64,3}, mc::Int64, grid::Dict, model::LikelihoodModel, steps::Int64, adapt_period::Int64, theta_i::Array{Int64, 1}, tgt_ar::Float64) #, prop_type::Int64
+function arq_met_hastings!(samples::Array{Float64,3}, mc::Int64, grid::Dict, model::LikelihoodModel, steps::Int64, adapt_period::Int64, tgt_ar::Float64) #, prop_type::Int64
+    # theta_i::Array{Int64, 1}
+    mc_fx::Array{Int64, 1} = zeros(Int64, 3)   # process run
+    x0 = get_initial_sample(model, grid, mc_fx)
+    theta_i::Array{Int64, 1} = x0[1]
+    xi = x0[2]
+    C_DEBUG && print(": θ ~ ", round.(xi.result.sample; sigdigits = C_PR_SIGDIG + 1))
     @init_inner_mcmc                                # initialise inner MCMC
     for i in 2:steps
         theta_f = get_theta_f(theta_i, j_w, j, 1)   # propose new theta

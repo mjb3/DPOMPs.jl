@@ -81,7 +81,7 @@
 #         ## propose new theta
 #         theta_f = get_theta_f(theta_i, j_w, j, C_MIN_J)
 #         ## validate
-#         if validate_theta(theta_f, model.sample_resolution)
+#         if validate_theta(theta_f, model.sample_dispersal)
 #             ## get log likelihood
 #             xf = get_ad_grid_point!(grid, theta_f, xi.aug_data, model)
 #             mcf[i,:] .= xf.result.sample
