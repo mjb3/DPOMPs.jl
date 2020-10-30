@@ -20,15 +20,17 @@ function get_arq_prior(priord::Distributions.Distribution)
     return arq_prior
 end
 
-## UPDATE FOR OFFSETS **********
+## realise theta index as sample value
 function get_theta_val(model::LikelihoodModel, theta::Array{Int64, 1})
-    output = zeros(Float64, length(theta))
-    for i in eachindex(theta)
-        output[i] = (theta[i] - 0.5) * model.sample_interval[i]
+    output = model.sample_offset + (theta .* model.sample_interval)
+    # output = zeros(Float64, length(theta))
+    for i in eachindex(output)
+        # output[i] = (theta[i] - 0.5) * model.sample_interval[i]
         model.jitter > 0.0 && (output[i] += (((rand() * 2) - 1) * model.jitter * model.sample_interval[i]))
     end
     return output
 end
+
 
 ## propose new theta coords
 function get_theta_f(theta_i::Array{Int64, 1}, j_w::StatsBase.ProbabilityWeights, max_dist::Int64, min_dist::Int64)
@@ -91,9 +93,26 @@ function compute_chain_mean_covar(samples::Array{Float64, 3}, mc::Int64, adapt_p
     return (mc_bar, scv)
 end
 
+
+## get intial parameter index and 'grid' sample - returns tuple(index, GridRequest)
+# NB. update for offsets ********
+function get_initial_sample(mdl::LikelihoodModel, grid::Dict{Array{Int64, 1}, GridPoint}, mc_fx::Array{Int64, 1}, sample_dispersal::Int64 = mdl.sample_dispersal)
+    theta_i = rand(1:sample_dispersal, length(mdl.sample_interval))     # choose initial theta coords
+    x0 = get_grid_point!(grid, theta_i, mdl, true)
+    x0.prior == -Inf && (return get_initial_sample(mdl, grid, mc_fx, sample_dispersal + 1))
+    x0.process_run && (mc_fx[1] += 1)
+    (C_DEBUG && sample_dispersal > mdl.sample_dispersal) && print(" *ISA: ", sample_dispersal - mdl.sample_dispersal, "*")
+    return (theta_i, x0)
+end
+
 ## initialise inner ARQ MCMC
 macro init_inner_mcmc()
       esc(quote
+      mc_fx::Array{Int64, 1} = zeros(Int64, 3)   # process run
+      x0 = get_initial_sample(model, grid, mc_fx)
+      theta_i::Array{Int64, 1} = x0[1]
+      xi = x0[2]
+      C_DEBUG && print(": θ ~ ", round.(xi.result.sample; sigdigits = C_PR_SIGDIG + 1))
       ## adaptive stuff
       C_LAR_J_MP = 0.2                                # low AR contingency values
       lar_j::Int64 = round(C_LAR_J_MP * model.sample_dispersal * length(theta_i))
@@ -113,6 +132,5 @@ macro init_inner_mcmc()
       samples[:,1,mc] .= xi.result.sample
       mc_idx[:,1] .= theta_i
       mc_accepted[1] = true
-      C_DEBUG && print("- mc", mc, " initialised ")
       end)
 end

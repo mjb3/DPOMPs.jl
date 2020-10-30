@@ -211,7 +211,7 @@ function tabulate_results(results::MCMCSample)
     # proposals && tabulate_proposals(results)
     ## samples
     # println("MCMC results:")
-    h = ["θ", "μ", "σ", "SRE", "SRE975"]
+    h = ["θ", "E[θ]", ":σ", "SRE", "SRE975"]
     d = Matrix(undef, length(results.samples.mu), 5)
     sd = compute_sigma(results.samples.cv)
     d[:,1] .= 1:length(results.samples.mu)
@@ -226,7 +226,7 @@ end
 function tabulate_results(results::ImportanceSample)
     ## samples
     # println("IBIS results:")
-    h = ["θ", "μ", "σ", C_LBL_BME]
+    h = ["θ", "E[θ]", ":σ", C_LBL_BME]
     d = Matrix(undef, length(results.mu), 4)
     sd = compute_sigma(results.cv)
     d[:,1] .= 1:length(results.mu)
@@ -257,7 +257,7 @@ end
 
 ## model evidence comparison
 function tabulate_results(results::ModelComparisonResults; null_index = 1)
-    h = ["Model", string("ln E(p(y))"), ":σ", "BF"]   # ADD THETA ******************
+    h = ["Model", string("ln E[p(y)]"), ":σ", "BF"]   # ADD THETA ******************
     d = Matrix(undef, length(results.mu), length(h))
     d[:,1] .= results.names
     d[:,2] .= round.(results.mu; digits = 1)

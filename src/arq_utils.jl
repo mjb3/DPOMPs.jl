@@ -31,6 +31,29 @@ end
 #     return -2 * log(p_y)
 # end
 
+## arq mcmc analysis:
+function tabulate_results(results::ARQMCMCSample; display::Bool = true)
+    d = Matrix(undef, length(results.imp_sample.mu), 7)
+    rj_sd = compute_sigma(results.samples.cv)
+    is_sd = compute_sigma(results.imp_sample.cv)
+    d[:,1] .= 1:length(results.imp_sample.mu)
+    d[:,2] .= round.(results.samples.mu; sigdigits = C_PR_SIGDIG)
+    d[:,3] .= round.(rj_sd; sigdigits = C_PR_SIGDIG)
+    d[:,4] .= round.(results.imp_sample.mu; sigdigits = C_PR_SIGDIG)
+    d[:,5] .= round.(is_sd; sigdigits = C_PR_SIGDIG)
+    d[:,6] .= round.(results.sre[:,2]; sigdigits = C_PR_SIGDIG)
+    d[:,7] .= round.(results.sre[:,3]; sigdigits = C_PR_SIGDIG)
+    # d[:,8] .= 0
+    # bme_seq = C_DEBUG ? (1:2) : (1:1)
+    # d[bme_seq,8] = round.(results.imp_sample.bme[bme_seq]; digits = 1)
+    if display
+        h = ["θ", "E[θ]", ":σ", "E[f(θ)]", ":σ", "SRE", "SRE975"]
+        PrettyTables.pretty_table(d, h)
+    else
+        h = ["θ", "e_x", "sd_x", "e_fx", "sd_fx", "SRE", "SRE975"]
+        return DataFrames.DataFrame(d, h)
+    end
+end
 
 ## print autocorrelation
 """
@@ -65,7 +88,7 @@ function print_results(results::ARQMCMCSample, dpath::String)
     isdir(dpath) || mkpath(dpath)                       # check dir
     open(string(dpath, "metadata.csv"), "w") do f       # print metadata
         write(f, "alg,np,adapt_period,sample_limit,sample_dispersal,run_time,fx,bme\narq,")
-        write(f, "$(length(results.imp_sample.mu)),$(results.adapt_period),$(results.sample_limit),$(results.sample_dispersal),$(results.run_time),$(results.fx),$(results.imp_sample.bme[1])")
+        write(f, "$(length(results.imp_sample.mu)),$(results.adapt_period),$(results.sample_limit),$(results.sample_dispersal),$(results.run_time),$(sum(results.fx)),$(results.imp_sample.bme[1])")
     end
     open(string(dpath, "sinterval.csv"), "w") do f      # print grid range
         write(f, "h")
@@ -73,25 +96,12 @@ function print_results(results::ARQMCMCSample, dpath::String)
             write(f, "\n$(results.sample_interval[i])")
         end
     end
+    open(string(dpath, "fx.csv"), "w") do f      # print grid range
+        write(f, "mc,fx")
+        for i in eachindex(results.fx)
+            write(f, "\n$i,$(results.fx[i])")
+        end
+    end
     print_imp_sample(results.imp_sample, dpath)         # print importance sample
     print_rej_sample(results.samples, dpath, results.sre)   # print MCMC resamples
-end
-
-## arq mcmc analysis:
-function tabulate_results(results::ARQMCMCSample)
-    h = ["θ", "Iμ", "Iσ", "Rμ", "Rσ", "SRE", "SRE975"]#, C_LBL_BME
-    d = Matrix(undef, length(results.imp_sample.mu), 7)
-    is_sd = compute_sigma(results.imp_sample.cv)
-    rj_sd = compute_sigma(results.samples.cv)
-    d[:,1] .= 1:length(results.imp_sample.mu)
-    d[:,2] .= round.(results.imp_sample.mu; sigdigits = C_PR_SIGDIG)
-    d[:,3] .= round.(is_sd; sigdigits = C_PR_SIGDIG)
-    d[:,4] .= round.(results.samples.mu; sigdigits = C_PR_SIGDIG)
-    d[:,5] .= round.(rj_sd; sigdigits = C_PR_SIGDIG)
-    d[:,6] .= round.(results.sre[:,2]; sigdigits = C_PR_SIGDIG)
-    d[:,7] .= round.(results.sre[:,3]; sigdigits = C_PR_SIGDIG)
-    # d[:,8] .= 0
-    # bme_seq = C_DEBUG ? (1:2) : (1:1)
-    # d[bme_seq,8] = round.(results.imp_sample.bme[bme_seq]; digits = 1)
-    PrettyTables.pretty_table(d, h)
 end

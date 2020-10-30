@@ -13,6 +13,7 @@ struct ARQModel{PFT<:Function}
     pdf::PFT
     # parameter_range::Array{Float64, 2}
     sample_interval::Array{Float64,1}
+    sample_offset::Array{Float64, 1}
 end
 
 ## augmented data model
@@ -32,10 +33,10 @@ end
 # end
 
 ## for internal use only
-# MERGE ARQModel?
 struct LikelihoodModel{PFT<:Function, PRT<:Function}
     pdf::PFT
     sample_interval::Array{Float64, 1}
+    sample_offset::Array{Float64, 1}
     sample_limit::Int64
     sample_dispersal::Int64
     jitter::Float64
@@ -121,6 +122,6 @@ struct ARQMCMCSample
     #     jitter::Float64
     sre::Array{Float64,2}
     run_time::UInt64
-    fx::Int64
+    fx::Array{Int64, 1}
     sample_cache::Dict{Array{Int64, 1}, GridPoint}
 end

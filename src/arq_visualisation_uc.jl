@@ -27,6 +27,16 @@ function plot_parameter_trace(sample::ARQMCMCSample, parameter::Int64)
     return plot_parameter_trace(sample.samples, parameter)
 end
 
+## all parameters
+function plot_parameter_trace(sample::ARQMCMCSample)
+    return plot_parameter_trace.([sample], [i for i in eachindex(sample.sample_interval)])
+end
+
+## Multiple analyses
+# function plot_parameter_trace(sample::Array{ARQMCMCSample,1}, parameter::Int64)
+#     return plot_parameter_trace.(sample[for i in eachindex(sample)].samples, i)
+# end
+
 ## ARQ
 function plot_parameter_heatmap(sample::ARQMCMCSample, x_parameter::Int64, y_parameter::Int64; use_is::Bool = false)
     use_is && (return plot_parameter_heatmap(sample.imp_sample, x_parameter, y_parameter))
@@ -38,4 +48,9 @@ function plot_parameter_marginal(sample::ARQMCMCSample, parameter::Int64; use_is
     xx =  use_is ? x.theta[parameter,:,:] : x.theta[parameter, (sample.adapt_period+1):size(x.theta, 2), :]
     nbins = Int(round((maximum(xx) - minimum(xx)) / sample.sample_interval[parameter]))
     return plot_parameter_marginal(x, parameter, use_is ? 0 : sample.adapt_period, nbins)
+end
+
+## Multi
+function plot_parameter_marginal(sample::ARQMCMCSample; use_is::Bool = false)
+    return plot_parameter_marginal.([sample], [i for i in eachindex(sample.sample_interval)], use_is = use_is)
 end

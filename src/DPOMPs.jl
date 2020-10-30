@@ -305,6 +305,7 @@ const C_ALG_DAUG  = "DAQ"
 
 ## structs
 include("arq_structs.jl")
+# length(x::ARQMCMCSample) = 1
 
 ### algorithms
 ## common functions, macro

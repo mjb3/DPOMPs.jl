@@ -28,18 +28,15 @@ end
 
 ##
 """
-    plot_parameter_trace(mcmc, parameter)
+    plot_parameter_trace(mcmc, [parameter::Int64])
 
-Trace plot of samples from `n` MCMC analyses for a given model `parameter` using [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl).
+Produce a trace plot of samples using [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl).
 
-**Parameters**
-- `sample`      -- `MCMCSample`, `ARQMCMCSample` or `RejectionSample` e.g. from a call to `ADD XREF`.
-- `parameter`   -- the index of the model parameter to be plotted.
-
+The `mcmc` input is of type `MCMCSample`, `ARQMCMCSample` or `RejectionSample`. The `parameter` index can be optionally specified, else all parameters are plotted and returned as an `Array` of unicode plots.
 """
 function plot_parameter_trace(sample::RejectionSample, parameter::Int64)
     x = 1:size(sample.theta, 2)
-    yl = [floor(minimum(sample.theta[parameter,:,:]), sigdigits = C_PR_SIGDIG), ceil(maximum(sample.theta[parameter,:,:]), sigdigits = C_PR_SIGDIG)]
+    yl = [floor(minimum(sample.theta[parameter,:,:]), sigdigits = 2), ceil(maximum(sample.theta[parameter,:,:]), sigdigits = 2)]
     p = UnicodePlots.lineplot(x, sample.theta[parameter,:,1], title = string("θ", Char(8320 + parameter), " traceplot."), ylim = yl)
     for i in 2:size(sample.theta, 3)
         UnicodePlots.lineplot!(p, sample.theta[parameter,:,i])
@@ -49,8 +46,17 @@ function plot_parameter_trace(sample::RejectionSample, parameter::Int64)
     return p
 end
 
+## MCMC
 function plot_parameter_trace(sample::MCMCSample, parameter::Int64)
     return plot_parameter_trace(sample.samples, parameter)
+end
+
+## all parameters
+function plot_parameter_trace(sample::RejectionSample)
+    return plot_parameter_trace.([sample], [i for i in eachindex(sample.mu)])
+end
+function plot_parameter_trace(sample::MCMCSample)
+    return plot_parameter_trace(sample.samples)
 end
 
 ## marginal
@@ -80,12 +86,11 @@ function plot_parameter_marginal(sample::MCMCSample, parameter::Int64; nbins = 2
     return plot_parameter_marginal(sample.samples, parameter, sample.adapt_period, nbins)
 end
 
-## resampler
+## resampler - MAKE BAYESIAN SOMEHOW? ****
 function plot_parameter_marginal(sample::ImportanceSample, parameter::Int64; nbins = 20)
     rs = resample_is(sample)
     return plot_parameter_marginal(rs, parameter, 0, nbins)
 end
-
 
 ## heatmap
 """
