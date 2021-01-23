@@ -1,5 +1,7 @@
 # Models
 
+This section provides instructions for generating models (WIP).
+
 ## Guide
 
 ### Predefined models
