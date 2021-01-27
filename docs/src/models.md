@@ -22,7 +22,7 @@ The canonical Kermack-McKendrick susceptible-infectious-recovered model is perha
 ```
 
 ```@repl
-using DPOMPs.jl
+using DPOMPs
 generate_model("SIR", [100, 1, 0])
 ```
 
