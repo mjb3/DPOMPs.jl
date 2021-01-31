@@ -14,13 +14,19 @@ A well-known example is the **Kermack-McKendrick susceptible-infectious-suscepti
 <img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sir.png" alt="SIR model" style="height: 80px;"/>
 ```
 
-In applied situations (e.g. like a scientific study) such systems are often difficult to directly observe, and so they are referred to in context as being **Partially Observed**.
+See the [Simple example] for a brief primer on DSS.
 
-The dynamics (how the system changes over time) of the **SIR**, and other **DSS** models, can be represented in continuous time by [a set of coupled] **Markov Processes**. Specifically, we can define a probability density, or likelihood function, that governs the time-evolution of the system under study.
+[ADD LINK]
 
-Furthermore, given some [partially complete] scientific data, the combined concepts yield a paradigm for [in this case, Bayesian] statistical inference based on a general class of model:  **Discrete-state-space Partially Observed Markov Processes, or DPOMPs.**
+In applied situations (e.g. like a scientific study) such systems are often difficult to *directly* observe, and so they are referred to in context as being **Partially Observed**.
 
-In other words, DPOMP models and methods allow us to learn about the system of interest (e.g. an ecosystem, pandemic, chemical reaction, and so on,) even in cases where the available data is only partially complete.
+The dynamics (how the system changes over time) of the **SIR**, and other **DSS** models, can be represented in continuous time by [a set of coupled] **Markov Processes**. More specifically, we can define a probability density (a 'likelihood function' in Bayesian parlance) that governs the time-evolution of the system under study.
+
+Combining these concepts, we have a general class of statistical model: **Discrete-state-space Partially Observed Markov Processes, or DPOMPs.**
+
+Furthermore, given some applicable [partially complete] scientific data, they yield a paradigm for (in this case, Bayesian) *statistical inference* based on that model class. That is, we can infer [the *likely* value of] unknown quantities, such as the *unknown* time of a *known* event (like the introduction of a pathogen,) or a model parameter that characterises the infectiousness of that pathogen.
+
+To summarise, DPOMP models and associated methods allow us to learn about a given system of interest (e.g. an ecosystem, pandemic, chemical reaction, and so on,) even in when the available data is limited ['partial'].
 
 ## Package features
 
@@ -31,10 +37,22 @@ In other words, DPOMP models and methods allow us to learn about the system of i
 * *Discrete*-state-space *Partially Observed Markov Processes*, in Julia.
 * It also includes automated tools for things like convergence diagnosis, model assessment and analysis.
 
-## Installation
-See the package [source code repository](https://github.com/mjb3/DPOMPs.jl) for instructions on how to install the package.
+The package code was initially developed during the course of a postgraduate research project in infectious disease modelling at Biostatistics Scotland, and there is a heavy emphasis on epidemiology and epidemiological modelling throughout.
 
-## Overview
+In practice though, this affects only the applied examples and naming conventions of the predefined models available with the package. Otherwise, the models and methods are applicable to many situations entirely outwith the field of ecology (such as chemical reactions.)
+
+## Installation
+As a prerequisite, the package naturally requires a working installation of the Julia programming language. The package is not yet registered but can nonetheless must be added via the package manager Pkg in the usual way.
+
+From the Julia REPL type `]` to enter the Pkg mode, and run:
+
+```
+pkg> add https://github.com/mjb3/DPOMPs.jl
+```
+
+See the package [code repository](https://github.com/mjb3/DPOMPs.jl) to inspect the source code.
+
+## Documentation
 
 ```@contents
 Pages = [

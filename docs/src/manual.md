@@ -71,7 +71,7 @@ plot_trajectory
 plot_parameter_trace
 plot_parameter_marginal
 plot_parameter_heatmap
-plot_model_evidence
+plot_model_comparison
 ```
 
 ### Advanced features.

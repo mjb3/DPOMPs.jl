@@ -125,7 +125,6 @@ struct HiddenMarkovModel{RFT<:Function, ICT<:Function, TFT<:Function, OFT<:Funct
     obs_function::OFT                   # observation function (sim only) - TO BE REMOVED
     obs_model::OMT                      # observation model (log likelihood)
     obs_data::Array{Observation,1}      # obs data
-    # fn_log_prior::PFT               # prior density function (log likelihood)
     prior::PFT   # prior distribution
     t0_index::Int64                     # == 0 if initial time known
 end

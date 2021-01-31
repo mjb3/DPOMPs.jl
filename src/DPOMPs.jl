@@ -67,7 +67,7 @@ export DPOMPModel, Particle, Event, Observation, ARQModel
 export SimResults, ImportanceSample, RejectionSample, MCMCSample, ARQMCMCSample, ModelComparisonResults
 export generate_model, generate_custom_model, partial_gaussian_obs_model
 export gillespie_sim, run_mcmc_analysis, run_ibis_analysis, run_arq_mcmc_analysis, run_model_comparison_analysis
-export plot_trajectory, plot_parameter_trace, plot_parameter_marginal, plot_parameter_heatmap, plot_model_evidence
+export plot_trajectory, plot_parameter_trace, plot_parameter_marginal, plot_parameter_heatmap, plot_model_comparison
 export get_observations, tabulate_results, print_results, get_particle_filter_lpdf
 export run_custom_mcmc_analysis, generate_custom_particle
 
@@ -180,6 +180,7 @@ tabulate_results(results)                   # optionally, show the results
 """
 function run_mcmc_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; n_chains::Int64 = 3, initial_parameters = rand(model.prior, n_chains), steps::Int64 = C_DF_MCMC_STEPS, adapt_period::Int64 = Int64(floor(steps * C_DF_MCMC_ADAPT)), fin_adapt::Bool = false, mbp::Bool = true, ppp::Float64 = 0.3, mvp::Int64 = 3)
     mdl = get_private_model(model, obs_data)
+    # println("ip: ", initial_parameters)
     if mbp
         return run_mbp_mcmc(mdl, initial_parameters, steps, adapt_period, fin_adapt)
     else

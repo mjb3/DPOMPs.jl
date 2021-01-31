@@ -132,7 +132,7 @@ end
 
 ## model evidence comparison
 """
-    plot_model_evidence(results; boxplot = true)
+    plot_model_comparison(results; boxplot = true)
 
 Plot the Bayesian model evidence (BME) from a model comparison analysis, using [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl).
 

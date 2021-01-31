@@ -16,17 +16,17 @@ Return an array of type `Observation`, based on a two-dimensional array, `DataFr
 
 Note that a observation times must be in the first column of the input variable.
 """
-function get_observations(df::DataFrames.DataFrame)
+function get_observations(df::DataFrames.DataFrame; time_col=1, type_col=0, val_seq=2:size(df,2))
     obs = Observation[]
     for i in 1:size(df,1)
-        push!(obs, Observation(df[i,1],df[i,2], 1.0, df[i,3:size(df,2)]))
+        obs_type = type_col==0 ? 1 : df[i,type_col]
+        push!(obs, Observation(df[i,time_col], obs_type, 1.0, df[i,val_seq]))
     end
     sort!(obs)
     return obs
-    # return Observations(df[1], df[2], df[3:size(df, 2)])
 end
 function get_observations(fpath::String)
-    df = CSV.read(fpath)
+    df = CSV.read(fpath, DataFrames.DataFrame)
     return get_observations(df)
 end
 
