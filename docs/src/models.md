@@ -126,7 +126,7 @@ generate_model("LOTKA", [70, 70]);
 #### Ross-MacDonald two-species Malaria model
 
 ```@raw html
-<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/rossmac.png" alt="Malaria model" style="height: 200px;"/>
+<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/rossmac.png" alt="Malaria model" style="height: 240px;"/>
 ```
 
 ```@repl 1

@@ -12,6 +12,13 @@ This package contains tools for Bayesian inference and simulation of DPOMP model
 - Discrete-state-space Partially Observed Markov Processes, in Julia.
 - Includes automated tools for convergence diagnosis and analysis.
 
+### Algorithms
+
+The package implements several customisable algorithms for Bayesian parameter inference, including:
+- Data-augmented MCMC
+- Particle filters
+- Iterative-batch-importance sampling
+
 ## Installation
 
 The package is not registered and must be added via the package manager Pkg.
