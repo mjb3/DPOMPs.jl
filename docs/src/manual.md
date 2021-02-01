@@ -4,10 +4,6 @@ Pages = ["manual.md"]
 Depth = 3
 ```
 
-## Index
-```@index
-```
-
 ## Types
 
 ### Model types
@@ -80,4 +76,8 @@ This section covers functionality for customising the algorithms themselves.
 ```@docs
 run_custom_mcmc_analysis
 generate_custom_particle
+```
+
+## Index
+```@index
 ```

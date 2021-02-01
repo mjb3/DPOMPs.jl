@@ -35,7 +35,7 @@ import DataFrames
 model = generate_model("SIS", [100,1])
 ```
 
-### Custom models
+### Customising models
 
 Models can also be specified manually. This is described further in the [Models](@ref) section.
 
