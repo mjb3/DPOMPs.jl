@@ -105,3 +105,12 @@ function print_runtime(rt)
     s > 120 && (return string(round(s / 60; digits = 2), " minutes"))
     return string(s, " seconds")
 end
+
+## compute sd (tabulate)
+function compute_sigma(cv::Array{Float64,2})
+    sd = zeros(size(cv,1))
+    for i in eachindex(sd)
+        sd[i] = sqrt(cv[i,i])
+    end
+    return sd
+end

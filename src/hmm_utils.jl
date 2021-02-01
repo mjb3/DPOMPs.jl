@@ -188,15 +188,6 @@ end
 
 #### tabulate stuff ####
 
-## compute sd (internal)
-function compute_sigma(cv::Array{Float64,2})
-    sd = zeros(size(cv,1))
-    for i in eachindex(sd)
-        sd[i] = sqrt(cv[i,i])
-    end
-    return sd
-end
-
 ## results summary
 #- `proposals`   -- display proposal analysis (MCMC only).
 """
@@ -236,6 +227,10 @@ function tabulate_results(results::ImportanceSample)
     bme_seq = C_DEBUG ? (1:2) : (1:1)
     d[bme_seq, 4] = round.(results.bme[bme_seq]; digits = 1)
     PrettyTables.pretty_table(d, h)
+end
+
+function tabulate_results(results::ARQMCMCSample)
+    ARQMCMC.tabulate_results(results)
 end
 
 

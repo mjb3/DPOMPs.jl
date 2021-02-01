@@ -13,6 +13,7 @@ import Distributions
 import StatsBase
 import Random
 import Statistics
+import PrettyTables
 
 ## constants
 const C_ALG_STD = "ARQ"
