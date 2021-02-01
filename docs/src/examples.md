@@ -11,7 +11,7 @@ Some familiarity with both Discrete state-space models and Bayesian inference is
 Perhaps the most familiar (to most people) example of these are the epidemiological variants, and in particular SIR and closely related SIS model, as illustrated below.
 
 ```@raw html
-<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sis.png" alt="SIS model" style="height: 140px;"/>
+<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sis.png" alt="SIS model" style="height: 120px;"/>
 ```
 Individuals are assumed to take one of *n* discrete states --in this case Susceptible or Infectious.
 
@@ -53,7 +53,7 @@ p = plot_trajectory(x)            # plot (optional)
 ```
 
 ```@raw html
-<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sis_sim.png" alt="SIS simulation" style="height: 220px;"/>
+<img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sis_sim.png" alt="SIS simulation" style="height: 260px;"/>
 ```
 
 ## Inference

@@ -1,5 +1,5 @@
 # DPOMPs.jl
-Fast Bayesian parameter inference for Discrete-state-space Partially Observed Markov Processes in Julia
+**Bayesian inference for Discrete-state-space Partially Observed Markov Processes in Julia**
 
 ![Documentation](https://github.com/mjb3/DPOMPs.jl/workflows/Documentation/badge.svg)
 
