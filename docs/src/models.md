@@ -2,9 +2,7 @@
 
 This section provides instructions for generating models (WIP).
 
-## Guide
-
-### Predefined models
+## Predefined models
 
 The package includes a set of predefined models, which can be instantiated easily:
 
@@ -15,7 +13,7 @@ import Distributions        # priors
 model = generate_model("SIS", [100,1])
 ```
 
-### Customising predefined models
+## Customising predefined models
 
 DPOMPModels are mutable ``structs``, which means that their properties can be altered after they have been instantiated. For example, we could specify a prior:
 
@@ -23,7 +21,7 @@ DPOMPModels are mutable ``structs``, which means that their properties can be al
 model.prior = Distributions.Product(Distributions.Uniform.(zeros(2), [0.01, 0.5]))
 ```
 
-### Custom models from scratch
+## Custom models from scratch
 
 Models can also be specified manually. For example, the model we just created could also be instantiated like so:
 

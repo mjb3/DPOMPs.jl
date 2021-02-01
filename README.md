@@ -14,7 +14,7 @@ This package contains tools for Bayesian inference and simulation of DPOMP model
 
 ### Algorithms
 
-The package implements several customisable algorithms for Bayesian parameter inference, including:
+The package implements several different customisable algorithms for Bayesian parameter inference, including:
 - Data-augmented MCMC
 - Particle filters
 - Iterative-batch-importance sampling
