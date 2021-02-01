@@ -1,5 +1,6 @@
 # dummy test result
 using DPOMPs
+# using DPOMPs.ARQMCMC
 import Random
 import Distributions
 # import Test
@@ -17,24 +18,32 @@ theta = [0.003, 0.1]
 x = gillespie_sim(model, theta)	    # run simulation
 println(plot_trajectory(x))			# plot (optional)
 
+## ARQMCMC
+sample_interval = [0.0005, 0.02]
+rs = run_arq_mcmc_analysis(model, y, sample_interval)
+tabulate_results(rs)
+
 ## DA MCMC
-model.prior = Distributions.Product(Distributions.Uniform.(zeros(2), [0.1, 0.5]))
+model.prior = Distributions.Product(Distributions.Uniform.(zeros(2), [0.01, 0.5]))
 rs = run_mcmc_analysis(model, y)
 tabulate_results(rs)
-# trace plot of contact parameter (optional)
-println(plot_parameter_trace(rs, 1))
+# println(plot_parameter_trace(rs, 1))  # trace plot of contact parameter (optional)
+
+## SMC^2
+results = run_ibis_analysis(model, y)
+tabulate_results(results)
 
 ## model comparison
 # define model to compare against
-seis_model = generate_model("SEIS", [100,0,1])
-seis_model.prior = Distributions.Product(Distributions.Uniform.(zeros(3), [0.1,0.5,0.5]))
-seis_model.obs_model = partial_gaussian_obs_model(2.0, seq = 3, y_seq = 2)
-
-# run comparison
-models = [model, seis_model]
-mcomp = run_model_comparison_analysis(models, y)
-tabulate_results(mcomp; null_index = 1)
-println(plot_model_comparison(mcomp))
+# seis_model = generate_model("SEIS", [100,0,1])
+# seis_model.prior = Distributions.Product(Distributions.Uniform.(zeros(3), [0.1,0.5,0.5]))
+# seis_model.obs_model = partial_gaussian_obs_model(2.0, seq = 3, y_seq = 2)
+#
+# # run comparison
+# models = [model, seis_model]
+# mcomp = run_model_comparison_analysis(models, y)
+# tabulate_results(mcomp; null_index = 1)
+# println(plot_model_comparison(mcomp))
 
 ## custom models
 # rate function
@@ -60,6 +69,6 @@ tm = [-1 1; 1 -1] # transition matrix
 # define model
 model = DPOMPModel("SIS", sis_rf!, [100, 1], tm, obs_fn, si_gaussian, prior, 0)
 x = gillespie_sim(model, theta)	# run simulation and plot
-println(plot_trajectory(x))
+# println(plot_trajectory(x))
 
 true

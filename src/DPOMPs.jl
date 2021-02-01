@@ -28,16 +28,16 @@ import PrettyTables
 import UnicodePlots     # https://github.com/Evizero/UnicodePlots.jl
 import StatsBase
 import Random           # for bitrand() function in arq
+## arq mcmc algorithm
+include("arq_main.jl")
+using .ARQMCMC
 
 ### global constants
-const C_DEBUG = false
-const C_RT_UNITS = 1000000000
 const C_LBL_BME = "-ln p(y)"
 const C_ALG_NM_SMC2 = "SMC2"
 const C_ALG_NM_MBPI = "MBPI"
 const C_INF_DELTA = 0.0000000000000001
 const MAX_TRAJ = 196000
-const C_PR_SIGDIG = 3
 
 ## MCMC
 const C_DF_MCMC_STEPS = 50000
@@ -53,33 +53,29 @@ const C_DF_ESS_CRIT = 0.3
 const C_DF_MBPI_ESS_CRIT = 0.5
 const C_DF_MBPI_MUT = 3
 
-## ARQ defaults
-const C_DF_ARQ_SL = 1       # sample limit
-const C_DF_ARQ_SR = 50      # inital sample distribution
-const C_DF_ARQ_MC = 5       # chains
-const C_DF_ARQ_AR = 0.33    # targeted AR
-const C_DF_ARQ_JT = 0.0     # jitter
-
 df_adapt_period(steps::Int64) = Int64(floor(steps * C_DF_MCMC_ADAPT))
 
 ### public stuffs ###
-export DPOMPModel, Particle, Event, Observation, ARQModel
-export SimResults, ImportanceSample, RejectionSample, MCMCSample, ARQMCMCSample, ModelComparisonResults
+export DPOMPModel, Particle, Event, Observation
+export SimResults, ImportanceSample, RejectionSample, MCMCSample, ModelComparisonResults
 export generate_model, generate_custom_model, partial_gaussian_obs_model
-export gillespie_sim, run_mcmc_analysis, run_ibis_analysis, run_arq_mcmc_analysis, run_model_comparison_analysis
+export gillespie_sim, run_mcmc_analysis, run_ibis_analysis, run_model_comparison_analysis
 export plot_trajectory, plot_parameter_trace, plot_parameter_marginal, plot_parameter_heatmap, plot_model_comparison
 export get_observations, tabulate_results, print_results, get_particle_filter_lpdf
 export run_custom_mcmc_analysis, generate_custom_particle
-
+# export ARQMCMC
+export ARQModel, ARQMCMCSample, run_arq_mcmc_analysis
 #### DSS-POMPs ####
 
 ## types ###
+include("cmn_structs.jl")
 include("hmm_structs.jl")
 import Base: isless
 isless(a::Event, b::Event) = isless(a.time, b.time)
 isless(a::Observation, b::Observation) = isless(a.time, b.time)
 
 ## common ###
+include("cmn.jl")
 include("hmm_cmn.jl")
 ## Gillespie simulation ###
 include("hmm_sim.jl")
@@ -298,33 +294,75 @@ function run_ibis_analysis(model::DPOMPModel, obs_data::Array{Observation,1}; al
 end
 
 #### ARQ-MCMC ####
+## - for direct access with internal model
+function run_arq_mcmc_analysis(model::HiddenMarkovModel, sample_interval::Array{Float64,1};
+    sample_offset::Array{Float64, 1} = (sample_interval / 2), sample_dispersal::Int64 = ARQMCMC.C_DF_ARQ_SR
+    , sample_limit::Int64 = C_DF_ARQ_SL, n_chains::Int64 = ARQMCMC.C_DF_ARQ_MC, steps::Int64 = C_DF_MCMC_STEPS
+    , burnin::Int64 = df_adapt_period(steps), tgt_ar::Float64 = ARQMCMC.C_DF_ARQ_AR, np::Int64 = 200
+    , ess_crit = 0.3) #, sample_cache = Dict{Array{Int64, 1}, GridPoint}()
 
-## constants
-const C_ALG_STD = "ARQ"
-const C_ALG_DAUG  = "DAQ"
-# const C_ALG_AD  = "ADARQ"
+    # sc::Dict{Array{Int64, 1}, ARQMCMC.GridPoint} = sample_cache
+    mdl = ARQModel(get_log_pdf_fn(model, np; essc = ess_crit), sample_interval, sample_offset)
+    pr::Array{Distributions.Distribution,1} = [model.prior]
+    println("ARQ model initialised: ", model.model_name)
+    return ARQMCMC.run_arq_mcmc_analysis(mdl, pr; sample_dispersal=sample_dispersal, sample_limit=sample_limit, n_chains=n_chains, steps=steps, burnin=burnin, tgt_ar=tgt_ar)#, sample_cache=sc
+end
 
-## structs
-include("arq_structs.jl")
-# length(x::ARQMCMCSample) = 1
+"""
+    run_arq_mcmc_analysis(model, obs_data, theta_range; ... )
 
-### algorithms
-## common functions, macro
-include("arq_alg_cmn.jl")
-## standard ARQ MCMC algorithm
-include("arq_alg_std.jl")
-## delayed acceptance ARQ MCMC algorithm
-# include("arq_alg_da.jl")
-## data augmented ARQ MCMC algorithm
-include("arq_alg_daug.jl")
-## common functions, printing, etc
-include("arq_utils.jl")
-## visualisation tools
-include("arq_visualisation_uc.jl")
+Run ARQ-MCMC analysis with `n_chains` Markov chains.
 
-## main algorithms
-include("arq_main.jl")
+The Gelman-Rubin convergence diagnostic is computed automatically.
+
+**Parameters**
+- `model`               -- `DPOMPModel` (see docs.)
+- `obs_data`            -- `Observations` data.
+- `sample_interval`     -- An array specifying the (fixed or fuzzy) interval between samples.
+
+**Optional**
+- `sample_dispersal`   -- i.e. the length of each dimension in the importance sample.
+- `sample_limit`        -- sample limit, should be increased when the variance of `model.pdf` is high (default: 1.)
+- `n_chains`            -- number of Markov chains (default: 3.)
+- `steps`               -- number of iterations.
+- `burnin`              -- number of discarded samples.
+- `tgt_ar`              -- acceptance rate (default: 0.33.)
+- `np`                  -- number of SMC particles in PF (default: 200.)
+- `ess_crit`            -- acceptance rate (default: 0.33.)
+- `sample_cache`        -- the underlying model likelihood cache - can be retained and reused for future analyses.
+"""
+function run_arq_mcmc_analysis(model::DPOMPModel, obs_data::Array{Observation,1}, sample_interval::Array{Float64,1};
+    sample_offset::Array{Float64, 1} = (sample_interval / 2), sample_dispersal::Int64 = ARQMCMC.C_DF_ARQ_SR
+    , sample_limit::Int64 = ARQMCMC.C_DF_ARQ_SL, n_chains::Int64 = ARQMCMC.C_DF_ARQ_MC, steps::Int64 = C_DF_MCMC_STEPS
+    , burnin::Int64 = df_adapt_period(steps), tgt_ar::Float64 = ARQMCMC.C_DF_ARQ_AR, np::Int64 = 200
+    , ess_crit = 0.3)#, sample_cache = Dict{Array{Int64, 1}, GridPoint}()
+
+    hmm = get_private_model(model, obs_data)
+    return run_arq_mcmc_analysis(hmm, sample_interval; sample_offset=sample_offset, sample_dispersal=sample_dispersal, sample_limit=sample_limit, n_chains=n_chains, steps=steps, burnin=burnin, tgt_ar=tgt_ar, np=np, ess_crit=ess_crit)#, sample_cache=sample_cache
+end
 
 
+# ## constants
+# const C_ALG_STD = "ARQ"
+# const C_ALG_DAUG  = "DAQ"
+# # const C_ALG_AD  = "ADARQ"
+
+# ## structs
+# include("arq_structs.jl")
+# # length(x::ARQMCMCSample) = 1
+#
+# ### algorithms
+# ## common functions, macro
+# include("arq_alg_cmn.jl")
+# ## standard ARQ MCMC algorithm
+# include("arq_alg_std.jl")
+# ## delayed acceptance ARQ MCMC algorithm
+# # include("arq_alg_da.jl")
+# ## data augmented ARQ MCMC algorithm
+# include("arq_alg_daug.jl")
+# ## common functions, printing, etc
+# include("arq_utils.jl")
+# ## visualisation tools
+# include("arq_visualisation_uc.jl")
 
 end # module

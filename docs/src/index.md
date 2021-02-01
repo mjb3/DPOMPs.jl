@@ -2,9 +2,12 @@
 
 **DPOMPs.jl** - *Bayesian inference for Discrete-state-space Partially Observed Markov Processes in Julia.*
 
-!!! note
+**DPOMPs.jl** is a package for:
 
-    Please note that this package is still in development.
+* Bayesian parameter inference, and
+* Simulation of,
+* *Discrete*-state-space *Partially Observed Markov Processes*, in Julia.
+* It also includes automated tools for things like convergence diagnosis, model assessment and analysis.
 
 ## What are DPOMP models?
 **Discrete-state-space (DSS)** models are used throughout ecology and other scientific domains to represent systems comprised of interacting components (e.g. people or molecules.)
@@ -30,12 +33,16 @@ To summarise, DPOMP models and associated methods allow us to learn about a give
 
 ## Package features
 
-**DPOMPs.jl** is a package for:
+The algorithms implemented by the package for simulation and inference include:
+* The Gillespie direct method algorithm
+* Data-augmented Markov chain Monte Carlo (MCMC)
+* Sequential Monte Carlo (i.e. particle filters)
+* SMC^2, or iterative-batch-importance sampling (IBIS)
 
-* Bayesian parameter inference, and
-* Simulation of,
-* *Discrete*-state-space *Partially Observed Markov Processes*, in Julia.
-* It also includes automated tools for things like convergence diagnosis, model assessment and analysis.
+A number of well-known models are provided as predefined examples:
+* SIR, SEIR, and other epidemiological model
+* The Lotka-Voltera predator-prey model
+* Ross-MacDonald two-species malaria model
 
 The package code was initially developed during the course of a postgraduate research project in infectious disease modelling at Biostatistics Scotland, and there is a heavy emphasis on epidemiology and epidemiological modelling throughout.
 

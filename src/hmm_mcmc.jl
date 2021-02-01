@@ -210,76 +210,7 @@ end
 #     end ## end of MCMC loop
 # end
 
-## gelman diagnostic (internal)
-function gelman_diagnostic(samples::Array{Float64,3}, discard::Int64)
-    np = size(samples,1)
-    niter::Int64  = size(samples,2)
-    nmc = size(samples,3)
-    fsmpl = discard + 1
-    nsmpl = niter - discard
-    ## compute W; B; V
-    # collect means and variances
-    mce = zeros(nmc, np)
-    mcv = zeros(nmc, np)
-    for i in 1:nmc
-        for j in 1:np
-            mce[i,j] = Statistics.mean(samples[j,fsmpl:end,i])
-            mcv[i,j] = Statistics.cov(samples[j,fsmpl:end,i])
-        end
-    end
-    # compute W, B
-    b = zeros(np)
-    w = zeros(np)
-    mu = zeros(np)
-    co = zeros(np)
-    v = zeros(np)
-    for j in 1:np
-        b[j] = nsmpl * Statistics.cov(mce[:,j])
-        w[j] = Statistics.mean(mcv[:,j])
-        # mean of means and var of vars (used later)
-        mu[j] = Statistics.mean(mce[:,j])
-        co[j] = Statistics.cov(mcv[:,j])
-        # compute pooled variance
-        v[j] = w[j] * ((nsmpl - 1) / nsmpl) + b[j] * ((np + 1) / (np * nsmpl))
-    end
-    #
-    vv_w = zeros(np)   # var of vars (theta_ex, i.e. W)
-    vv_b = zeros(np)   # var of vars (B)
-    mce2 = mce.^2                                          # ev(theta)^2
-    cv_wb = zeros(np)   # wb covar
-    for j in 1:np
-        vv_w[j] = co[j] / nmc
-        vv_b[j] = (2 * b[j] * b[j]) / (nmc - 1)
-        cv_wb[j] = (nsmpl / nmc) * (Statistics.cov(mcv[:,j], mce2[:,j]) - (2 * mu[j] * Statistics.cov(mcv[:,j], mce[:,j])))
-    end
-    # compute d; d_adj (var.V)
-    d = zeros(np)
-    dd = zeros(np)
-    atmp = nsmpl - 1
-    btmp = 1 + (1 / nmc)
-    for j in 1:np
-        tmp = ((vv_w[j] * atmp * atmp) + (vv_b[j] * btmp * btmp) + (cv_wb[j] * 2 * atmp * btmp)) / (nsmpl * nsmpl)
-        d[j] = (2 * v[j] * v[j]) / tmp
-        dd[j] = (d[j] + 3) / (d[j] + 1)
-    end
-    # compute scale reduction estimate
-    sre = zeros(np,3)
-    try
-        for j in 1:np
-            rr = btmp * (1 / nsmpl)  * (b[j] / w[j]) ## NB. btmp ***
-            sre[j,2] = sqrt(dd[j] * ((atmp / nsmpl) + rr)) ## atmp
-            # F dist(nu1, nu2)
-            fdst = Distributions.FDist(nmc - 1, 2 * w[j] * w[j] / vv_w[j])
-            sre[j,1] = sqrt(dd[j] * ((atmp / nsmpl) + Statistics.quantile(fdst, 0.025) * rr))
-            sre[j,3] = sqrt(dd[j] * ((atmp / nsmpl) + Statistics.quantile(fdst, 0.975) * rr))
-        end
-        # return GelmanResults
-        return (mu = mu, wcv = sqrt.(w), sre = sre)
-    catch gmn_err
-        println("GELMAN ERROR: ", gmn_err)
-        return (mu = mu, wcv = sqrt.(w), sre = sre) # return zeros
-    end
-end
+
 
 
 #### public functions (custom framework) ####

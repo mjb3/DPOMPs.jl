@@ -34,7 +34,7 @@ The susceptible-infectious model is the simplest conceptual example of this clas
 ```
 
 ```@repl 1
-generate_model("SI", [100, 1])
+generate_model("SI", [100, 1]);
 ```
 
 #### SIS model
@@ -45,7 +45,7 @@ Another common derivative of the SIR model.
 ```
 
 ```@repl 1
-generate_model("SIS", [100, 1])
+generate_model("SIS", [100, 1]);
 ```
 
 #### SEI model
@@ -55,7 +55,7 @@ The SEI model includes an 'exposed' state, i.e. for modelling communicable disea
 <img src="https://raw.githubusercontent.com/mjb3/DPOMPs.jl/master/docs/img/sei.png" alt="SEI model" style="height: 80px;"/>
 ```
 ```@repl 1
-generate_model("SEI", [100, 0, 1])
+generate_model("SEI", [100, 0, 1]);
 ```
 
 #### SEIR model
@@ -66,7 +66,7 @@ Somewhat obviously, the SEIR model concept combines the SEI with the SIR.
 ```
 
 ```@repl 1
-generate_model("SEIR", [100, 0, 1, 0])
+generate_model("SEIR", [100, 0, 1, 0]);
 ```
 
 ### Others
@@ -78,7 +78,7 @@ generate_model("SEIR", [100, 0, 1, 0])
 ```
 
 ```@repl 1
-generate_model("LOTKA", [70, 70])
+generate_model("LOTKA", [70, 70]);
 ```
 
 #### Ross-MacDonald two-species Malaria model
@@ -88,5 +88,5 @@ generate_model("LOTKA", [70, 70])
 ```
 
 ```@repl 1
-generate_model("ROSSMAC", [100, 0, 400, 50])
+generate_model("ROSSMAC", [100, 0, 400, 50]);
 ```

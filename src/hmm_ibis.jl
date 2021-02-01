@@ -8,17 +8,6 @@ function compute_ess(w::Array{Float64,1})
     return sum(w)^2 / sum(w.^2)
 end
 
-## compute is mu var
-function compute_is_mu_covar!(mu::Array{Float64,1}, cv::Array{Float64,2}, theta::Array{Float64,2}, w::Array{Float64,1})
-    for i in eachindex(mu)
-        mu[i] = sum(w .* theta[i,:]) / sum(w)                       # compute mu
-        cv[i,i] = sum(w .* ((theta[i,:] .- mu[i]).^2)) / sum(w)     # variance
-        for j in 1:(i-1)                                            # covar
-            cv[i,j] = cv[j,i] = sum(w .* (theta[i,:] .- mu[i]) .* (theta[j,:] .- mu[j])) / sum(w)
-        end
-    end
-end
-
 ## i.e. SMC^2 algorithm (Chopin 2013)
 function run_pibis(model::HiddenMarkovModel, theta::Array{Float64, 2}, ess_rs_crit::Float64, ind_prop::Bool, alpha::Float64, np::Int64; n_props = 1)
     ##, rej_sample = size(theta, 2)
