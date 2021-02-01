@@ -1,6 +1,6 @@
 # Models
 
-This section provides instructions for generating models (WIP).
+This section provides instructions for generating model instances in **DPOMPs.jl**.
 
 ## Predefined models
 
@@ -51,6 +51,7 @@ model = DPOMPModel("SIS", sis_rf!, [100, 1], tm, obs_fn, si_gaussian, prior, 0)
 ```
 
 ## Model directory
+Here we provide a brief overview of predefined models available in the package.
 
 ### Epidemiological models
 
